@@ -1,0 +1,55 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+\setlength{\parindent}{0cm}
+\begin{document}
+
+\begin{center}
+"Deliverable 1"\\
+Nathan Harms, Tristan Schorn
+\end{center}
+
+\section{Description}
+We intend to create a text-based adventure (or ``Interactive Fiction") game
+targeted to the Linux command-line. We will focus on procedurally generated
+content rather than a scripted story.
+
+\section{Features}
+\begin{enumerate}
+  \item A parser that allows the user to interact with the game through commands
+    that resemble natural language.
+  \item A procedural world generator which produces structured worlds that make
+    sense.
+  \item A procedural action generator which determines which actions a player
+    can take based on context, e.g. which actions can be performed on an object.
+  \item A simulation which determines the consequences of actions on objects.
+  \item A system which generates descriptions of the above actions to inform the
+    user of the effect they are having.
+\end{enumerate}
+
+Beyond these, we may attempt more features if time permits. These may include:
+\begin{enumerate}
+  \item Generation of image-based graphics.
+  \item A narrative.
+\end{enumerate}
+
+\section{Competition}
+Text-based adventures and ``interactive fiction" are not highly competitive.
+However, there are many hobbyists who produce work in this area, and there are
+some technologies that facilitate this, such as the Gargoyle player. There is
+also academic research being done in the area, as it is a simple testbed for
+ideas in natural language processing, AI, and computer creativity.
+
+The Gargoyle player (ccxvii.net/gargoyle) is an interpreter for games which
+focuses on having a well-designed interface and good typography, as well as
+being an all-in-one interpreter for various formats of games. Our system is not
+an interpreter and will focus on content-generation as opposed to interface
+design.
+
+A system called Curveship (curveship.com) has been created by Nick Montfort at
+MIT and has similar aims as our system. Our game will be a standalone game and
+not a system for developing games, however.
+
+\end{document}
