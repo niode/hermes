@@ -1,24 +1,21 @@
-READ ME!
-
+Text-based adventure game concept
 
 #Features:#
--Read emails: IMAP protocol (library)
+-ability to control the movement and actions of the player's character
 
--compose emails: call $EDITOR
+-saving the state of the game
 
--send emails: SMTP? (library)
+-random environments and occurances based on random algorithms
 
--GPG integration
+Bonus Features (time permitting):
 
--Extensibility
-
-UI: text/console based (ncurses)
+-simple 8-bit graphics
 
 #Competition:#
--Outlook: better because: runs on Linux, better in all ways!
+-Not too many of these games are currently being made. A number of them existed in the past though. One example: http://www.bbc.co.uk/programmes/articles/1g84m0sXpnNCv84GpN2PLZG/the-hitchhikers-guide-to-the-galaxy-game-30th-anniversary-edition
 
--Thunderbird: simpler, configurable, lighter, modular
 
--Mutt: simpler, lighter, easier
+
+-None of these games would update until the player took actions. To enhance immersion, we may add elements that would be timer based, and require the player to take actions at a specific time interval. This would be represented in game as a new line being printed represednting the new game state.
 
 
