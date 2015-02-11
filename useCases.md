@@ -38,7 +38,7 @@ Name: Finding an Item
 Actor: Player
 --
 
-Goals: Allow the player to find itmes in the world.
+Goals: Allow the player to find items in the world.
 --
 
 Preconditions: Player is playing the game and is in an area where items can be found.
@@ -60,16 +60,16 @@ Postconditions: Player character gains the item.
 
 
 
-Name: Finding an Item
+Name: Equipping an Item
 --
 
 Actor: Player
 --
 
-Goals: Allow the player to find itmes in the world.
+Goals: Allow the player to equip itmes.
 --
 
-Preconditions: Player is playing the game and is in an area where items can be found.
+Preconditions: Player is playing the game.
 --
 
 Flows:
@@ -77,13 +77,41 @@ Flows:
 Player
 **Game**
 
-**1. Game displays text informing of the existence of a nearby item**
+**1. Game displays text informing the player of available items**
 
-2.Player decides to pick up item.
+2.Player decides to equip an item.
 
-**3. Game places item in players' inventory**
+**3. Game equips item to player**
 
-Postconditions: Player character gains the item.
+Postconditions: Player now has item equipped.
+--
+
+
+
+Name: Crafting a new Item
+--
+
+Actor: Player
+--
+
+Goals: Allow the player to craft new items.
+--
+
+Preconditions: Player is playing the game and has items available.
+--
+
+Flows:
+--
+Player
+**Game**
+
+**1. Game displays text informing the player of available items**
+
+2.Player decides to craft a new item.
+
+**3. Game creates new item in players inventory**
+
+Postconditions: Player now has the new item.
 --
 
 
