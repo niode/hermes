@@ -1,7 +1,7 @@
 Story Map
 ==
 
-# User Interface
+# Interacting with the game.
 Story
 --
 As a player I type a command into the game which is not understood, and I get an
@@ -27,13 +27,12 @@ Story
 As a player I can view a log that describes my own own history, provided I have
 the appropriate tools.
 
-# Game Mechanics
 Story
 --
 As a player I pick up an item and I can store it in an inventory for later use.
 I may also drop unwanted items.
 
-# Object Generation
+# Modifying objects.
 Story
 --
 As a player I can use an item to interact with other items in ways that make
@@ -45,7 +44,7 @@ As a player I have a 'modular character', in the sense that my abilities are
 determined by the items I have access to. E.g. my character can obtain improved
 legs to increase its running speed, and a character without legs can't move.
 
-# World Generation
+# Interacting with the world.
 Story
 --
 As a player I begin a new game and the world is new (has not been seen in any
