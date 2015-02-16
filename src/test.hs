@@ -30,10 +30,14 @@ main = do
 
   -- Process input.
   input `onActivate` \this ->
-    getEditText this >>= (error . getResponse . T.unpack)
+    getEditText this >>= ((printResponse output) . getResponse . T.unpack)
 
   -- Loop.
   runUi c defaultContext
+
+printResponse::Widget FormattedText -> String ->IO ()
+printResponse w "exit" = error "Game exited."
+printResponse w s = setText w (T.pack s)
 
 getResponse::String->String
 getResponse _ = "You are a bad player."
