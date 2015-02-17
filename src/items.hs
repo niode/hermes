@@ -26,3 +26,36 @@ lgen_rules p (m:ms) = (case (p, m, ms) of
   (_, ModNull, _) -> []
   _ -> [m]
   ) ++ (lgen_rules (m:p) ms)
+
+
+data Kernel = KA | KB | KC | KD | KE
+instance Show Kernel where
+  show KA = "a"
+  show KB = "b"
+  show KC = "c"
+  show KD = "d"
+  show KE = "e"
+
+parseKernel::String->[Kernel]
+parseKernel [] = []
+parseKernel ('a':k) = (KA :) $ parseKernel k
+parseKernel ('b':k) = (KB :) $ parseKernel k
+parseKernel ('c':k) = (KC :) $ parseKernel k
+parseKernel ('d':k) = (KD :) $ parseKernel k
+parseKernel ('e':k) = (KE :) $ parseKernel k
+
+kgen::Int->[Kernel]->[Kernel]
+kgen 0 k = k
+kgen n k = kgen (n - 1) $ kgen_rules [] k
+
+kgen_rules::[Kernel]->[Kernel]->[Kernel]
+kgen_rules _ [] = []
+kgen_rules p (k:ks) = (case (p, k, ks) of
+    (_, KA, KB : _) -> [KA, KC, KB]
+    (_, KA, KC : _) -> [KA, KB, KC]
+    (_, KA, KA : _) -> [KB, KB, KB]
+    (KA : _, KB, KC: _) -> [KD]
+    (KB : _, KC, KA : _) -> []
+    (KD : _, _, _) -> []
+    _ -> [k]
+  ) ++ (kgen_rules (k:p) ks)
