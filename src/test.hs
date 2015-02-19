@@ -1,6 +1,10 @@
 import Graphics.Vty.Widgets.All
 import qualified Data.Text as T
 
+data UIDescriptionResponse = UIDExit | UIDString String
+data UIInventoryResponse = UIIString String
+data UIResponse = UIResponse (Maybe UIDescriptionResponse) (Maybe UIInventoryResponse)
+
 main::IO ()
 main = do
   -- The player types here.
@@ -30,14 +34,29 @@ main = do
 
   -- Process input.
   input `onActivate` \this ->
-    getEditText this >>= ((printResponse output) . getResponse . T.unpack)
+    getEditText this >>= ((updateUI output inventory input) . getResponse . T.unpack)
 
   -- Loop.
   runUi c defaultContext
 
-printResponse::Widget FormattedText -> String ->IO ()
-printResponse w "exit" = error "Game exited."
-printResponse w s = setText w (T.pack s)
+updateUI::Widget FormattedText -> Widget FormattedText -> Widget Edit -> UIResponse -> IO ()
+updateUI desc inv input (UIResponse d i) = do
+    updateDescription desc d
+    updateInventory inv i
+    setEditText input (T.pack "")
+    return ()
 
-getResponse::String->String
-getResponse _ = "You are a bad player."
+updateDescription::Widget FormattedText -> Maybe UIDescriptionResponse -> IO ()
+updateDescription desc Nothing = return ()
+updateDescription desc (Just resp) = case resp of
+  UIDExit -> error "Game exited."
+  UIDString s -> setText desc (T.pack s)
+
+updateInventory::Widget FormattedText -> Maybe UIInventoryResponse -> IO ()
+updateInventory inv Nothing = return ()
+updateInventory inv (Just resp) = case resp of
+  UIIString s -> setText inv (T.pack s)
+
+getResponse::String->UIResponse
+getResponse "exit" = UIResponse (Just UIDExit) Nothing
+getResponse s = UIResponse (Just (UIDString s)) Nothing
