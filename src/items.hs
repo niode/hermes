@@ -1,3 +1,5 @@
+module Items where
+
 data Module = ModNull
             | Walk Int Int
             | Examine [ExamineProp]

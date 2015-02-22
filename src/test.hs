@@ -1,10 +1,7 @@
 import Graphics.Vty.Widgets.All
 import qualified Data.Text as T
 import System.Exit ( exitSuccess )
-
-data UIDescriptionResponse = UIDExit | UIDString String
-data UIInventoryResponse = UIIString String
-data UIResponse = UIResponse (Maybe UIDescriptionResponse) (Maybe UIInventoryResponse)
+import Engine
 
 main::IO ()
 main = do
@@ -17,15 +14,18 @@ main = do
 
   -- The responses will go in here.
   output <- plainText (T.pack "This is where the output goes.")
-  boutput <- bordered =<< (return output)
+  boutput <- bordered =<< ((return output) <++> (hFill ' ' 1) <--> (vFill ' '))
 
   -- The inventory.
   inventory <- plainText (T.pack "This is where the inventory goes.")
   binventory <- bordered =<< (return inventory)
 
   -- The window where all the descriptive stuff will be.
-  stateWindow <- hBox boutput binventory
-  ui <- (return title) <--> hBorder <--> (return stateWindow) <--> (return binput)
+  stateWindow <- (return boutput) <++> (return binventory)
+  ui <- (return title)
+        <--> hBorder
+        <--> (return stateWindow)
+        <-->(return binput)
 
   fg <- newFocusGroup
   addToFocusGroup fg input
@@ -57,7 +57,3 @@ updateInventory::Widget FormattedText -> Maybe UIInventoryResponse -> IO ()
 updateInventory inv Nothing = return ()
 updateInventory inv (Just resp) = case resp of
   UIIString s -> setText inv (T.pack s)
-
-getResponse::String->UIResponse
-getResponse "exit" = UIResponse (Just UIDExit) Nothing
-getResponse s = UIResponse (Just (UIDString s)) Nothing
