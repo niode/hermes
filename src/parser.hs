@@ -35,6 +35,8 @@ data ParsedThing = PlaceHolder String
  -
  -  Note: "System commands" such as "exit" or "info" will be implemented by
  -  invisible items.
+ -
+ -  See wiki.haskell.org/Parsing_a_simple_imperative_language
  -}
 
 data Statement = Stmt Action deriving Show
