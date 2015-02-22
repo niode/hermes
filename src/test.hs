@@ -1,5 +1,6 @@
 import Graphics.Vty.Widgets.All
 import qualified Data.Text as T
+import System.Exit ( exitSuccess )
 
 data UIDescriptionResponse = UIDExit | UIDString String
 data UIInventoryResponse = UIIString String
@@ -41,15 +42,15 @@ main = do
 
 updateUI::Widget FormattedText -> Widget FormattedText -> Widget Edit -> UIResponse -> IO ()
 updateUI desc inv input (UIResponse d i) = do
-    updateDescription desc d
-    updateInventory inv i
-    setEditText input (T.pack "")
-    return ()
+  updateDescription desc d
+  updateInventory inv i
+  setEditText input (T.pack "")
+  return ()
 
 updateDescription::Widget FormattedText -> Maybe UIDescriptionResponse -> IO ()
 updateDescription desc Nothing = return ()
 updateDescription desc (Just resp) = case resp of
-  UIDExit -> error "Game exited."
+  UIDExit -> exitSuccess
   UIDString s -> setText desc (T.pack s)
 
 updateInventory::Widget FormattedText -> Maybe UIInventoryResponse -> IO ()
