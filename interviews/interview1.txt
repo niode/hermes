@@ -1,0 +1,67 @@
+Is it easy to distinguish between elements of the interface?
+  Yes. They are broken up very nicely.
+
+Is it satisfying to interact with the system?
+  Yes.
+
+Sample interaction:
+>Inventory
+[1] Hands
+[2] Feet
+[3] Eyes
+[4] Backpack
+
+>jump
+You jump.
+
+>map
+You have no item that can do that.
+
+>look
+You can see:
+[1] A large rock (nearby)
+[2] A large rock (1 hour) // The user could understand that this was the time
+                          // it would take to reach the item.
+
+>walk to rock
+Which rock?
+
+>[1]                      // The user typed "[1]" instead of "1".
+You are at the large rock.
+
+>Lift Rock
+You pick up the large rock.
+** Inventory is updated. **
+
+>Throw [5]
+You throw the large rock.
+** Inventory is updated. **
+
+>Walk to rock [2]
+What?
+
+>Look
+You can see:
+[1] A large rock (nearby)
+[2] A large rock (1 hour)
+
+>Move to rock [2]
+You arrive at the large rock 1 hour later.
+
+>Backpack
+It's empty.
+
+>Smash rock.
+The large rock becomes: 2 small rocks.
+
+>Drop rock on foot.
+What?
+
+>Pick up one small rock.
+**Inventory updated.**
+
+>Drop rock on feet
+What?
+
+>THROW ROCK AT NATHAN // Something more informative than "what?" is probably
+required, since users get frustrated that they don't know what they can do.
