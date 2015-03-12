@@ -1,0 +1,21 @@
+Is it easy to distinguish between elements of the interface?
+	Yes, but I would like to see command suggestions. I would add a splash screen when it loads up.
+
+Is it satisfying to interact with the system?
+	Yes, and I don't feel like any new widgets need to be added. I like that I have to use my imagination.
+
+Sample interaction:
+>look around
+You see a rock and a door.
+
+>run to rock
+You go to the rock, and see something shiny on top of it.
+
+>climb rock
+You find a key on top of the rock.
+
+>pick up key
+You pocket the key.
+
+>eat key
+You die. Restart?

@@ -1,0 +1,16 @@
+Is it easy to distinguish between elements of the interface?
+
+Is it satisfying to interact with the system?
+
+Sample interaction:
+>look around nearby
+You see a nearby treasure chest. It is locked.
+
+>look for key
+You found a shiny key.
+
+>open chest
+The chest opens. You find inside a sword, a map, and some gold.
+
+>equip sword
+You are now holding the sword.
