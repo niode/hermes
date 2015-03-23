@@ -1,5 +1,6 @@
 Is it easy to distinguish between elements of the interface?
-	Yes, however I would like to see more widgets to show thing like the current location of my character, and the currently equipped items on my character.
+  Yes, however I would like to see more widgets to show thing like the current
+  location of my character, and the currently equipped items on my character.
 
 Is it satisfying to interact with the system?
 	Yes, but it would be more satisfying with more widgets as I suggested.
