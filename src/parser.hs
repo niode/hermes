@@ -1,5 +1,5 @@
 module Parser
-  (ParsedThing) where
+  (Action) where
 
 import System.IO
 import Control.Monad
@@ -7,8 +7,6 @@ import Text.ParserCombinators.Parsec
 import Text.ParserCombinators.Parsec.Expr
 import Text.ParserCombinators.Parsec.Language
 import qualified Text.ParserCombinators.Parsec.Token as Token
-
-data ParsedThing = PlaceHolder String
 
 {-
  - Grammar:
@@ -23,6 +21,7 @@ data ParsedThing = PlaceHolder String
  -  Article := the | a | an
  -
  -  Noun := x
+ -        | Integer
  -        | Article x
  -
  -  Verb := x
@@ -39,7 +38,6 @@ data ParsedThing = PlaceHolder String
  -  See wiki.haskell.org/Parsing_a_simple_imperative_language
  -}
 
-data Statement = Stmt Action deriving Show
 data Action = AVerb Verb
             | ATarget Verb Preposition Noun
             | AConjunction Action Action
@@ -48,7 +46,8 @@ data Preposition = PIn | POf | PTo | POn deriving Show
 data Conjunction = Conj deriving Show
 data Article = The | A | An deriving Show
 data Noun = NounConst String
-          | Article String
+          | NounInt Integer
+          | ArticleNoun Article String
           deriving Show
 data Verb = VerbConst String
           | Use Noun
@@ -79,10 +78,110 @@ identifier  = Token.identifier  lexer
 reserved    = Token.reserved    lexer
 integer     = Token.integer     lexer
 whitespace  = Token.whiteSpace  lexer
+parens      = Token.parens      lexer
+
+parseCommand::String->Action
+parseCommand s =
+  case parse clean "" s of
+    Left  e -> error $ show e
+    Right r -> r
 
 -- Cleans up initial whitespace (parser only handles whitespace after tokens).
---clean :: Parser Statement
---clean = whitespace >> statement
+clean :: Parser Action
+clean = whitespace >> action
 
---statement :: Parser Statement
---statement = verbStmt <|> verbPrepStmt <|> actionStmt
+action :: Parser Action
+--action = conjAction <|> verbAction <|> verbNounAction
+action = verbAction <|> verbNounAction
+
+verbAction :: Parser Action
+verbAction = do
+  v <- verb
+  return $ AVerb v
+
+verbNounAction :: Parser Action
+verbNounAction = do
+  v <- verb
+  p <- preposition
+  n <- noun
+  return $ ATarget v p n
+
+conjAction :: Parser Action
+conjAction = do
+  a1 <- action
+  _  <- conjunction
+  a2 <- action
+  return $ AConjunction a1 a2
+
+verb :: Parser Verb
+verb = verbC <|> verbB <|> verbD <|> verbE <|> verbA
+
+-- A should go last since it accepts anything.
+verbA = do
+  var <- identifier
+  return $ VerbConst var
+
+verbB = do
+  reserved "use"
+  n <- noun
+  return $ Use n
+
+verbC = do
+  reserved "use"
+  n1 <- noun
+  p  <- preposition
+  n2 <- noun
+  return $ UseTarget n1 p n2
+
+verbD = do
+  reserved "do"
+  n1 <- noun
+  p  <- preposition
+  n2 <- noun
+  return $ Do n1 p n2
+
+verbE = do
+  reserved "apply"
+  n1 <- noun
+  p  <- preposition
+  n2 <- noun
+  return $ Apply n1 p n2
+
+noun :: Parser Noun
+noun = nounInt <|> nounB <|> nounA
+
+nounInt = (do p <- parens nounInt; return p)
+      <|> (do i <- integer; return $ NounInt i)
+
+nounA = do
+  var <- identifier
+  return $ NounConst var
+
+nounB = do
+  a <- article
+  var <- identifier
+  return $ ArticleNoun a var
+
+article :: Parser Article
+article = articleA <|> articleThe <|> articleAn
+articleA = do
+  reserved "a"
+  return A
+
+articleThe = do
+  reserved "the"
+  return The
+
+articleAn = do
+  reserved "an"
+  return An
+
+preposition :: Parser Preposition
+preposition = (do reserved "in"; return PIn)
+          <|> (do reserved "of"; return POf)
+          <|> (do reserved "to"; return PTo)
+          <|> (do reserved "on"; return POn)
+
+conjunction :: Parser Conjunction
+conjunction = (do reserved "and"; return Conj)
+          <|> (do reserved "then"; return Conj)
