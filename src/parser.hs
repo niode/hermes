@@ -81,8 +81,8 @@ integer     = Token.integer     lexer
 whitespace  = Token.whiteSpace  lexer
 
 -- Cleans up initial whitespace (parser only handles whitespace after tokens).
-clean :: Parser Statement
-clean = whitespace >> statement
+--clean :: Parser Statement
+--clean = whitespace >> statement
 
-statement :: Parser Statement
-statement = verbStmt <|> verbPrepStmt <|> actionStmt
+--statement :: Parser Statement
+--statement = verbStmt <|> verbPrepStmt <|> actionStmt
