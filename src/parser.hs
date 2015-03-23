@@ -25,6 +25,7 @@ import qualified Text.ParserCombinators.Parsec.Token as Token
  -        | Article x
  -
  -  Verb := x
+ -        | x with Noun
  -        | use Noun
  -        | use Noun Preposition Noun
  -        | do Noun Preposition Noun
@@ -50,6 +51,7 @@ data Noun = NounConst String
           | ArticleNoun Article String
           deriving Show
 data Verb = VerbConst String
+          | With String Noun
           | Use Noun
           | UseTarget Noun Preposition Noun
           | Do Noun Preposition Noun
@@ -69,6 +71,7 @@ languageDef =
                                     , "the"
                                     , "a"
                                     , "an"
+                                    , "with"
                                     ]
            }
 
@@ -114,7 +117,13 @@ conjAction = do
   return $ AConjunction a1 a2
 
 verb :: Parser Verb
-verb = verbC <|> verbB <|> verbD <|> verbE <|> verbA
+verb = verbWith <|> verbC <|> verbB <|> verbD <|> verbE <|> verbA
+
+verbWith = do
+  var <- identifier
+  reserved "with"
+  n <- noun
+  return $ With var n
 
 -- A should go last since it accepts anything.
 verbA = do
