@@ -16,12 +16,9 @@ data UIInventoryResponse
 data UIResponse
   = UIResponse (Maybe UIDescriptionResponse) (Maybe UIInventoryResponse)
 
-data Item
-  = Item String Int deriving (Show)
-
 getResponse::String->UIResponse
 getResponse "exit" = UIResponse (Just UIDExit) Nothing
 getResponse s = UIResponse (Just (UIDString s)) Nothing
 
-baseInventory = [Carry 10]
-baseSystem = [System]
+baseInventory = Item [Upgrade, Magnify 10, Carry]
+baseSystem = Item [System]

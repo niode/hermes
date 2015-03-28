@@ -1,5 +1,11 @@
 module Parser
-  (Action) where
+  ( Action(..)
+  , Preposition(..)
+  , Conjunction(..)
+  , Article(..)
+  , Noun(..)
+  , Verb(..)
+  , parseCommand) where
 
 import System.IO
 import Control.Monad
@@ -57,7 +63,6 @@ data Verb = VerbConst String
           | Do Noun Preposition Noun
           | Apply Noun Preposition Noun
           deriving Show
-data AdHoc = AdHoc String deriving Show
 
 languageDef =
   emptyDef {  Token.identStart  = letter
