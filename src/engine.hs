@@ -22,3 +22,6 @@ data Item
 getResponse::String->UIResponse
 getResponse "exit" = UIResponse (Just UIDExit) Nothing
 getResponse s = UIResponse (Just (UIDString s)) Nothing
+
+baseInventory = [Carry 10]
+baseSystem = [System]
