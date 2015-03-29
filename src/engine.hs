@@ -6,6 +6,7 @@ module Engine
   , getResponse
   , initState) where
 
+import System.Random
 import Parser
 import Items
 
@@ -18,15 +19,17 @@ data UIInventoryResponse
 data UIResponse
   = UIResponse GameState (Maybe UIDescriptionResponse) (Maybe UIInventoryResponse)
 
-data GameState = GameState {inventory :: [Item]}
+data GameState = GameState {inventory :: [Item], rng :: StdGen}
 type CommandFunction = (GameState -> GameState)
 data Command = Command {names :: [String], function :: CommandFunction}
 
-getResponse::String->UIResponse
-getResponse "exit" = UIResponse initState (Just UIDExit) Nothing
-getResponse s = UIResponse initState (Just (UIDString s)) Nothing
+getResponse::GameState->String->UIResponse
+getResponse state "exit" = UIResponse state (Just UIDExit) Nothing
+getResponse state cmd = UIResponse state (Just (UIDString cmd)) Nothing
 
-initState = GameState []
+initState :: StdGen -> GameState
+initState rng = GameState [] rng
+
 baseInventory = Item [Upgrade, Magnify 10, Carry]
 baseSystem = Item [System]
 
