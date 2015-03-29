@@ -1,4 +1,12 @@
-module Items (Item(Item), Module(..), moduleFold, describe) where
+module Items
+  ( Item(Item)
+  , Module(..)
+  , moduleFold
+  , describe
+  , newItem) where
+
+import System.Random
+import Control.Monad.State
 
 tests::[Item]
 tests = [
@@ -175,6 +183,15 @@ nounify _ = []
 --------------------------------------------------------------------------------
 -- Item generation:
 --------------------------------------------------------------------------------
+
+randomSt::(Random a) => State StdGen a
+randomSt = state random
+
+newItem::State StdGen Item
+newItem = do
+  numMods <- randomSt
+  return $ Item [Magnify numMods, Rad]
+
 -- "Normalize" a list of modules (e.g. condense magnitudes).
 normalize::[Module]->[Module]
 normalize = normalizeMagnify
