@@ -3,8 +3,26 @@ import qualified Data.Text as T
 import System.Exit ( exitSuccess )
 import Engine
 
+newtype GameStateW = GameStateW GameState
+
+newGameState :: GameState -> IO (Widget GameStateW)
+newGameState state = do
+  let st = GameStateW state
+  newWidget st $ \w -> w
+
+setGameState :: Widget GameStateW -> GameState -> IO ()
+setGameState wRef val = updateWidgetState wRef $ const $ GameStateW val
+
+getGameState :: Widget GameStateW -> IO GameState
+getGameState wRef = do
+  GameStateW state <- getState wRef
+  return state
+
 main::IO ()
 main = do
+  -- The game's state.
+  gameState <- newGameState initState
+
   -- The player types here.
   input <- editWidget
   binput <- bordered =<< (return input)
@@ -25,7 +43,7 @@ main = do
   ui <- (return title)
         <--> hBorder
         <--> (return stateWindow)
-        <-->(return binput)
+        <--> (return binput)
 
   fg <- newFocusGroup
   addToFocusGroup fg input
@@ -35,13 +53,20 @@ main = do
 
   -- Process input.
   input `onActivate` \this ->
-    getEditText this >>= ((updateUI output inventory input) . getResponse . T.unpack)
+    getEditText this >>=
+      ((updateUI output inventory input gameState) . getResponse . T.unpack)
 
   -- Loop.
   runUi c defaultContext
 
-updateUI::Widget FormattedText -> Widget FormattedText -> Widget Edit -> UIResponse -> IO ()
-updateUI desc inv input (UIResponse d i) = do
+updateUI:: Widget FormattedText
+        -> Widget FormattedText
+        -> Widget Edit
+        -> Widget GameStateW
+        -> UIResponse
+        -> IO ()
+updateUI desc inv input state (UIResponse s d i) = do
+  setGameState state s
   updateDescription desc d
   updateInventory inv i
   setEditText input (T.pack "")
@@ -50,7 +75,7 @@ updateUI desc inv input (UIResponse d i) = do
 updateDescription::Widget FormattedText -> Maybe UIDescriptionResponse -> IO ()
 updateDescription desc Nothing = return ()
 updateDescription desc (Just resp) = case resp of
-  UIDExit -> exitSuccess
+  UIDExit -> shutdownUi
   UIDString s -> setText desc (T.pack s)
 
 updateInventory::Widget FormattedText -> Maybe UIInventoryResponse -> IO ()
