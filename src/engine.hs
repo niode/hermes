@@ -7,6 +7,7 @@ module Engine
   , initState) where
 
 import Control.Monad.State
+import Data.List
 import System.Random
 import Parser
 import Items
@@ -17,11 +18,18 @@ data UIDescriptionResponse
 
 data UIInventoryResponse
   = UIIString String
+
 data UIResponse
   = UIResponse (Maybe UIDescriptionResponse) (Maybe UIInventoryResponse)
 
-data Event  = ItemPickup Item String
-            | ItemDrop Item String
+data Event
+  = ItemPickup Item String
+  | ItemDrop Item String
+
+-- Get the event's name
+eventName::Event->String
+eventName (ItemPickup _ s) = s
+eventName (ItemDrop _ s) = s
 
 data GameState = GameState  { inventory :: [Item]
                             , rng :: StdGen
@@ -111,7 +119,7 @@ printInventory::State GameState String
 printInventory = do
   items <- getInventory
   let desc = descriptions items
-  return $ sep "\n" desc
+  return $ (concat . (intersperse "\n")) desc
 
 combineFunction::CommandFunction
 combineFunction = do
@@ -119,8 +127,3 @@ combineFunction = do
   setInventory $ (combine a b) : inv
   str <- printInventory
   return $ uiInventory str
-
-sep::String->[String]->String
-sep s = foldr (\x result -> case result of
-  [] -> x
-  _  -> x ++ s ++ result) []
