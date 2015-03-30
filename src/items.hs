@@ -13,19 +13,6 @@ import Control.Monad (replicateM, mapM)
 import Data.Set (Set, insert, empty, toList)
 import Data.List as List
 
-tests::[Item]
-tests = [
-    [toWalk [Smooth 3, Rough 7]],
-    [toWalk [Smooth 10, Rough 4]],
-    [toWalk [Smooth 14, Rough 6]],
-    [Magnify 2, Rad, toWalk [Smooth 4, Rough 6]],
-    [Fire, toWalk [Smooth 65, Rough 15]],
-    [Magnify 245, Rad, Fire, toWalk [Smooth 13, Rough 50]],
-    [Magnify 46, toExamine [World, Player]],
-    [Magnify 23, Grasp, Magnify 30, toExamine [History, Player]],
-    [Magnify 100, toExamine [History, Player]]
-  ]
-
 type Item = [Module]
 
 data Module = Magnify Int           -- Make things better

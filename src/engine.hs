@@ -26,6 +26,11 @@ data Event
   = ItemPickup Item String
   | ItemDrop Item String
 
+instance Eq Event where
+  (ItemPickup _ s) == (ItemPickup _ t) = s == t
+  (ItemDrop _ s) == (ItemDrop _ t) = s == t
+  _ == _ = False
+
 -- Get the event's name
 eventName::Event->String
 eventName (ItemPickup _ s) = s
@@ -64,6 +69,20 @@ getRng = state $ \gs -> ((rng gs), gs)
 setRng::StdGen->State GameState ()
 setRng rng = state $ \(GameState inv _ events) -> ((), GameState inv rng events)
 
+getItem::String->State GameState (Maybe Item)
+getItem name = do
+  inv <- getInventory
+  if (length inv) > 0
+    then return $ Just (inv !! 0)
+    else return Nothing
+
+getItemI::Int->State GameState (Maybe Item)
+getItemI n = do
+  inv <- getInventory
+  if n >= 0 && n < (length inv)
+    then return $ Just $ inv !! n
+    else return Nothing
+
 putEvent::Event->State GameState ()
 putEvent event = state $
   \(GameState is rng es) -> ((), GameState is rng (event:es))
@@ -92,9 +111,45 @@ getResponse cmd = do
 
 -- Read the syntax tree
 runCommand::Action->State GameState UIResponse
-runCommand (AVerb (VerbConst "exit")) = exitFunction
-runCommand (AVerb (VerbConst "item")) = itemFunction
-runCommand (AVerb (VerbConst "combine")) = combineFunction
+runCommand (AVerb (VerbConst s)) = constFunction s
+runCommand (AVerb (With string noun)) = withFunction string noun
+runCommand (AVerb (Use noun)) = useFunction noun
+runCommand (AVerb (UseTarget noun prep noun')) =
+  useTargetFunction noun prep noun'
+
+runCommand (AVerb (Do noun prep noun')) = doFunction noun prep noun'
+runCommand (AVerb (Apply noun prep noun')) = applyFunction noun prep noun'
+
+constFunction::String->State GameState UIResponse
+constFunction "exit" = exitFunction
+constFunction "item" = itemFunction
+constFunction "combine" = combineFunction
+constFunction s = return $ uiDescription $ "command " ++ s
+
+withFunction::String->Noun->State GameState UIResponse
+withFunction string (NounConst noun) = return $
+  uiDescription (string ++ " with " ++ noun)
+
+useFunction::Noun->State GameState UIResponse
+useFunction (NounConst noun) = do
+  item <- getItem noun
+  return $ uiDescription $ "using " ++ noun
+
+useTargetFunction::Noun->Preposition->Noun->State GameState UIResponse
+useTargetFunction (NounConst n) _ (NounConst m) = return $
+  uiDescription "whatever, frig"
+
+doFunction::Noun->Preposition->Noun->State GameState UIResponse
+doFunction (NounConst n) _ (NounConst m) = return $
+  uiDescription "holy hell too much to do"
+
+applyFunction::Noun->Preposition->Noun->State GameState UIResponse
+applyFunction (NounConst n) _ (NounConst m) = return $
+  uiDescription "got a lot on my plate"
+
+--------------------------------------------------------------------------------
+-- Item commands
+--------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
 -- System commands

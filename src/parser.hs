@@ -49,21 +49,21 @@ data Action = AVerb Verb
             | ATarget Verb Preposition Noun
             | AConjunction Action Action
             | AError String
-            deriving Show
-data Preposition = PIn | POf | PTo | POn deriving Show
-data Conjunction = Conj deriving Show
-data Article = The | A | An deriving Show
+            deriving (Show, Eq)
+data Preposition = PIn | POf | PTo | POn deriving (Show, Eq)
+data Conjunction = Conj deriving (Show, Eq)
+data Article = The | A | An deriving (Show, Eq)
 data Noun = NounConst String
           | NounInt Integer
           | ArticleNoun Article String
-          deriving Show
+          deriving (Show, Eq)
 data Verb = VerbConst String
           | With String Noun
           | Use Noun
           | UseTarget Noun Preposition Noun
           | Do Noun Preposition Noun
           | Apply Noun Preposition Noun
-          deriving Show
+          deriving (Show, Eq)
 
 languageDef =
   emptyDef {  Token.identStart  = letter
