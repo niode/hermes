@@ -7,6 +7,8 @@ module Items
 
 import System.Random
 import Control.Monad.State
+import Control.Monad (replicateM, mapM)
+import Data.Set (Set, insert, empty, toList)
 
 tests::[Item]
 tests = [
@@ -23,8 +25,7 @@ tests = [
 
 newtype Item = Item [Module]
 
-data Module = ModNull
-            | Magnify Int           -- Make things better
+data Module = Magnify Int           -- Make things better
             | Walk LWalkProp        -- Move
             | Rad                   -- How awesome is it?
             | Fly                   -- Move
@@ -38,7 +39,9 @@ data Module = ModNull
             | Expend Int            -- Item can be expended
             | Break                 -- Indicates a breakpoint
             | System                -- System commands, e.g. "exit"
-            deriving Show
+            deriving (Show)
+
+num_modules = 13 :: Int
 
 -- Folds (ish) a function over the modules. This function should take
 -- a tuple and return a list. In the tuple (p, m, ms):
@@ -49,6 +52,14 @@ moduleFold::(([Module], Module, [Module]) -> [a])->[Module]->[a]
 moduleFold f = moduleFold' f [] where
   moduleFold' f p [] = []
   moduleFold' f p (m:ms) = (f (p, m, ms)) ++ (moduleFold' f (m:p) ms)
+
+moduleFoldS::(Ord a)=>(([Module], Module, [Module]) -> [a])->[Module]->Set a
+moduleFoldS f = moduleFold' f [] where
+  moduleFold' f p [] = empty
+  moduleFold' f p (m:ms) = foldr
+    (\x s -> insert x s)
+    (moduleFold' f (m:p) ms)
+    (f (p, m, ms))
 
 class PropertyList t where
   combineProp :: t -> t -> t
@@ -83,7 +94,9 @@ data ExamineProp
   | Player
   | History
   | Whatever
-  deriving (Show, Eq)
+  deriving (Show, Eq, Enum)
+
+num_examineprops = 5
 
 newtype LExamineProp = LExamineProp {eprop :: [ExamineProp]} deriving Show
 instance PropertyList LExamineProp where
@@ -105,7 +118,7 @@ describe::Item->Maybe String
 describe (Item mods) = case nouns of
   [] -> Nothing
   _  -> Just $ (format adjectives) ++ (format' nouns)
-  where adjectives = moduleFold adjectify mods
+  where adjectives = take 5 $ toList $ moduleFoldS adjectify mods
         nouns      = moduleFold nounify   mods
         format = foldr (\word words -> case words of
           [] -> word ++ " "
@@ -114,23 +127,15 @@ describe (Item mods) = case nouns of
           [] -> []
           w  -> case words of [] -> w; _ -> w ++ " " ++ words) []
 
+--------------------------------------------------------------------------------
+-- ADJECTIFY
 -- Produce adjectives to describe an item.
+--------------------------------------------------------------------------------
 adjectify::([Module], Module, [Module])->[String]
 
--- Rad things:
-adjectify (Magnify n : _, Rad, _)
-  | n > 100   = ["extremely rad"]
-  | n > 80    = ["sick"]
-  | n > 50    = ["fashionable"]
-  | n < 5     = ["clean"]
-  | otherwise = []
-adjectify (_, Rad, _) = ["embarassing"]
+-- Magnify
 
--- Fire things:
-adjectify (_, Fire, (Walk prop : _))
-  = ["combustible"]
-
--- Walking things:
+-- Walking
 adjectify (_, (Walk prop), _)
   | smooth > 10 && rough > 10 = ["well-cobbled"]
   | smooth > 6  && rough > 4  = ["quick"]
@@ -139,17 +144,81 @@ adjectify (_, (Walk prop), _)
   where smooth = walkSmooth prop
         rough  = walkRough  prop
 
+-- Rad
+adjectify (Magnify n : _, Rad, _)
+  | n > 100   = ["extremely rad"]
+  | n > 80    = ["sick"]
+  | n > 50    = ["fashionable"]
+  | n > 5     = ["clean"]
+  | otherwise = ["embarrassing"]
+adjectify (_, Rad, _) = ["embarrassing"]
+
+-- Fly
+adjectify (_, Fly, _) = ["lighter-than-air"]
+
+-- Examine
+
+-- Grasp
+
+-- Carry
+
+-- Explode
+
+-- Fire
+adjectify (_, Fire, (Walk prop : _)) = ["combustible"]
+
+-- Illuminate
+adjectify (Magnify n : _, Illuminate, _)
+  | n > 10    = ["luminous"]
+  | otherwise = []
+
+-- Upgrade
+adjectify (_, Upgrade, _) = ["unfinished"]
+
+-- Expend
+adjectify (_, Expend n, _)
+  | n < 3     = ["feeble"]
+  | n < 10    = ["disposable"]
+  | otherwise = ["destructible"]
+
+-- Break
+adjectify (_, Break, _) = ["destructible"]
+
+-- System
+adjectify (_, System, _) = ["self-aware"]
+
 adjectify _ = []
 
+
+--------------------------------------------------------------------------------
+-- NOUNIFY
 -- Produce nouns to name an item.
+--------------------------------------------------------------------------------
 nounify::([Module], Module, [Module])->[String]
 
--- Walking items:
+-- Magnify
+nounify (_, Magnify n, _)
+  | n > 100 = ["carbon-fiber"]
+  | n > 50  = ["titanium"]
+  | otherwise = []
+
+-- Walk
 nounify (_, (Walk prop), _)
-  | smooth > 5 && rough > 5 = ["utility boots"]
-  | otherwise               = ["shoes"]
+  | smooth > 5 && rough > 5 = ["utility boots", ""]
+  | otherwise               = ["shoes", ""]
   where smooth = walkSmooth prop
         rough  = walkRough  prop
+
+-- Rad
+
+-- Fly
+nounify (Magnify n : _, Fly, _)
+  | n > 50    = ["rocket pods", ""]
+  | n > 30    = ["wings", ""]
+  | n > 10    = ["jetpack", ""]
+  | otherwise = ["stabilizers", ""]
+
+nounify (_, Fly, _) = ["fins", ""]
 
 -- Examining items:
 nounify (_, Examine props, _)
@@ -165,6 +234,7 @@ nounify (_, Examine props, _)
         history = hasExamine History prop
         prop = eprop props
 
+-- Grasp
 nounify (Magnify n : _, Grasp, _)
   | n > 20 = ["vice grip", ""]
   | n > 15 = ["claw", ""]
@@ -172,25 +242,94 @@ nounify (Magnify n : _, Grasp, _)
   | otherwise = ["grabber", ""]
 nounify (_, Grasp, _) = ["grabber", ""]
 
-nounify (_, Magnify n, _)
-  | n > 100 = ["carbon-fiber"]
-  | n > 50  = ["titanium"]
-  | otherwise = []
+-- Carry
+nounify (Magnify n : _, Carry, _)
+  | n > 80  = ["TARDIS", ""]
+  | n > 30  = ["storage unit", ""]
+  | n > 10  = ["backpack", ""]
+  | otherwise = ["satchel", ""]
+
+nounify (_, Carry, _) = ["pouch", ""]
+
+-- Explode
+nounify (Magnify n : _, Explode, _)
+  | n > 50    = ["bomb", ""]
+  | n > 25    = ["stick of dynamite", ""]
+  | otherwise = ["firecracker", ""]
+
+-- Fire
+
+-- Illuminate
+nounify (Magnify n : _, Illuminate, _)
+  | n > 20    = ["beacon", ""]
+  | n > 10    = ["flashlight", ""]
+  | otherwise = ["candle", ""]
+
+-- Upgrade
+
+-- Expend
+
+-- Break
+
+-- System
+
 
 nounify _ = []
-
 
 --------------------------------------------------------------------------------
 -- Item generation:
 --------------------------------------------------------------------------------
 
-randomSt::(Random a) => State StdGen a
-randomSt = state random
+getRandom::(Random a) => (a, a) -> State StdGen a
+getRandom (low, hi) = state (randomR (low, hi))
+
+getRandoms::(Random a) => (a, a) -> Int -> State StdGen [a]
+getRandoms (low, hi) n = replicateM n (getRandom (low, hi))
 
 newItem::State StdGen Item
 newItem = do
-  numMods <- randomSt
-  return $ Item [Magnify numMods, Rad]
+  numMods <- getRandom (0, 100)
+  nums <- getRandoms (0, num_modules - 1) numMods
+  modules <- mapM generateModule nums
+  rounds <- getRandom (1, 50)
+  let item = lgen rounds modules
+  return $ Item item
+
+generateModule::Int->State StdGen Module
+generateModule 0 = do
+  n <- getRandom (1, 30)
+  return $ Magnify n
+
+generateModule 1 = do
+  r <- getRandom (1, 5)
+  s <- getRandom (1, 10)
+  return $ toWalk [Smooth s, Rough r]
+
+generateModule 2 = return Rad
+
+generateModule 3 = return Fly
+
+generateModule 4 = do
+  n <- getRandom (0, num_examineprops - 1)
+  return $ toExamine [toEnum n]
+
+generateModule 5 = return Grasp
+
+generateModule 6 = return Carry
+
+generateModule 7 = return Explode
+
+generateModule 8 = return Fire
+
+generateModule 9 = return Illuminate
+
+generateModule 10 = return Upgrade
+
+generateModule 11 = do
+  n <- getRandom (1, 10)
+  return $ Expend n
+
+generateModule 12 = return Break
 
 -- "Normalize" a list of modules (e.g. condense magnitudes).
 normalize::[Module]->[Module]
@@ -208,10 +347,17 @@ lgen n m = lgen (n-1) $ moduleFold lgen_rules m
 
 lgen_rules::([Module], Module, [Module])->[Module]
 lgen_rules (p, m, ms) = case (p, m, ms) of
+  -- Magnifications
+  (_, Magnify a, Magnify b : _) -> [Magnify (a + b)]
+  (Magnify _ : _, Magnify _, _) -> []
+
+  -- Expendable things
   (_, Expend b, Expend a : _) -> [Expend (a + b)]
   (Expend a : _, Expend _, _) -> []
-  (Expend 0 : _, _, _)      -> [Expend 0]
 
+  (Expend 0 : _, _, _)      -> [Expend 0] -- Expend a property
+
+  -- Combine walks
   (_, Walk a, (Walk b : _)) -> [Walk (combineProp a b)]
   (Walk a : _ , Walk _, _)  -> []
 
@@ -223,5 +369,4 @@ lgen_rules (p, m, ms) = case (p, m, ms) of
   (Grasp : _, Magnify a, Grasp : _) -> []
   (Magnify a : Grasp : _, Grasp, _) -> []
 
-  (_, ModNull, _) -> []
   _ -> [m]
