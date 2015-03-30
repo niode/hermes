@@ -20,7 +20,13 @@ data UIInventoryResponse
 data UIResponse
   = UIResponse (Maybe UIDescriptionResponse) (Maybe UIInventoryResponse)
 
-data GameState = GameState {inventory :: [Item], rng :: StdGen}
+data Event  = ItemPickup Item String
+            | ItemDrop Item String
+
+data GameState = GameState  { inventory :: [Item]
+                            , rng :: StdGen
+                            , events :: [Event]}
+
 type CommandFunction = State GameState UIResponse
 data Command = Command {names :: [String], function :: CommandFunction}
 
@@ -35,10 +41,11 @@ uiResponse d i = UIResponse (Just (UIDString d)) (Just (UIIString i))
 
 putInventory::Item->State GameState ()
 putInventory item = state $
-  \(GameState is rng) -> ((), GameState (item : is) rng)
+  \(GameState is rng events) -> ((), GameState (item : is) rng events)
 
 setInventory::[Item]->State GameState ()
-setInventory inv = state $ \(GameState _ rng) -> ((), GameState inv rng)
+setInventory inv = state $
+  \(GameState _ rng events) -> ((), GameState inv rng events)
 
 getInventory::State GameState [Item]
 getInventory = state $ \gs -> ((inventory gs), gs)
@@ -47,7 +54,14 @@ getRng::State GameState StdGen
 getRng = state $ \gs -> ((rng gs), gs)
 
 setRng::StdGen->State GameState ()
-setRng rng = state $ \(GameState inv _) -> ((), GameState inv rng)
+setRng rng = state $ \(GameState inv _ events) -> ((), GameState inv rng events)
+
+putEvent::Event->State GameState ()
+putEvent event = state $
+  \(GameState is rng es) -> ((), GameState is rng (event:es))
+
+getEvents::State GameState [Event]
+getEvents = state $ \gs -> ((events gs), gs)
 
 getNewItem::State GameState Item
 getNewItem = do
@@ -57,7 +71,7 @@ getNewItem = do
   return item
 
 initState :: StdGen -> GameState
-initState rng = GameState [baseSystem, baseInventory] rng
+initState rng = GameState [baseSystem, baseInventory] rng []
 
 baseInventory = [Upgrade, Magnify 10, Carry]
 baseSystem = [System]
