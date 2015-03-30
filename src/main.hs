@@ -2,6 +2,7 @@ import Graphics.Vty.Widgets.All
 import qualified Data.Text as T
 import System.Exit ( exitSuccess )
 import System.Random
+import Control.Monad.State
 import Engine
 
 newtype GameStateW = GameStateW GameState
@@ -63,19 +64,19 @@ main = do
   -- Loop.
   runUi c defaultContext
 
-wrapResponse:: Widget GameStateW -> String -> IO UIResponse
+wrapResponse:: Widget GameStateW -> String -> IO (UIResponse, GameState)
 wrapResponse gs cmd = do
-  state <- getGameState gs
-  return $ getResponse state cmd
+  st <- getGameState gs
+  return $ runState (getResponse cmd) st
 
 updateUI:: Widget FormattedText
         -> Widget FormattedText
         -> Widget Edit
         -> Widget GameStateW
-        -> IO UIResponse
+        -> IO (UIResponse, GameState)
         -> IO ()
 updateUI desc inv input state response = do
-  UIResponse newState dUpdate iUpdate <- response
+  (UIResponse dUpdate iUpdate, newState) <- response
   setGameState state newState
   updateDescription desc dUpdate
   updateInventory inv iUpdate

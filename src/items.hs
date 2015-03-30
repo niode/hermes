@@ -1,29 +1,32 @@
 module Items
-  ( Item(Item)
+  ( Item
   , Module(..)
   , moduleFold
+  , combine
   , describe
+  , descriptions
   , newItem) where
 
 import System.Random
 import Control.Monad.State
 import Control.Monad (replicateM, mapM)
 import Data.Set (Set, insert, empty, toList)
+import Data.List as List
 
 tests::[Item]
 tests = [
-    Item [toWalk [Smooth 3, Rough 7]],
-    Item [toWalk [Smooth 10, Rough 4]],
-    Item [toWalk [Smooth 14, Rough 6]],
-    Item [Magnify 2, Rad, toWalk [Smooth 4, Rough 6]],
-    Item [Fire, toWalk [Smooth 65, Rough 15]],
-    Item [Magnify 245, Rad, Fire, toWalk [Smooth 13, Rough 50]],
-    Item [Magnify 46, toExamine [World, Player]],
-    Item [Magnify 23, Grasp, Magnify 30, toExamine [History, Player]],
-    Item [Magnify 100, toExamine [History, Player]]
+    [toWalk [Smooth 3, Rough 7]],
+    [toWalk [Smooth 10, Rough 4]],
+    [toWalk [Smooth 14, Rough 6]],
+    [Magnify 2, Rad, toWalk [Smooth 4, Rough 6]],
+    [Fire, toWalk [Smooth 65, Rough 15]],
+    [Magnify 245, Rad, Fire, toWalk [Smooth 13, Rough 50]],
+    [Magnify 46, toExamine [World, Player]],
+    [Magnify 23, Grasp, Magnify 30, toExamine [History, Player]],
+    [Magnify 100, toExamine [History, Player]]
   ]
 
-newtype Item = Item [Module]
+type Item = [Module]
 
 data Module = Magnify Int           -- Make things better
             | Walk LWalkProp        -- Move
@@ -57,14 +60,14 @@ moduleFoldS::(Ord a)=>(([Module], Module, [Module]) -> [a])->[Module]->Set a
 moduleFoldS f = moduleFold' f [] where
   moduleFold' f p [] = empty
   moduleFold' f p (m:ms) = foldr
-    (\x s -> insert x s)
+    (\x s -> Data.Set.insert x s)
     (moduleFold' f (m:p) ms)
     (f (p, m, ms))
 
 class PropertyList t where
   combineProp :: t -> t -> t
 
--- Walk properties
+-- Walk properties -------------------------------------------------------------
 newtype LWalkProp = LWalkProp {wprop :: [WalkProp]} deriving Show
 data WalkProp
   = Smooth Int  -- Can walk over smooth terrain.
@@ -87,7 +90,7 @@ walkRough  prop = foldr (\x r -> case x of
   (Rough  y) -> r + y
   (Smooth _) -> r) 0 (wprop prop)
 
--- Examine properties
+-- Examine properties ----------------------------------------------------------
 data ExamineProp
   = Material
   | World
@@ -112,14 +115,22 @@ hasExamine prop = foldr (\p v -> v || (p == prop)) False
 --------------------------------------------------------------------------------
 -- Description generation:
 --------------------------------------------------------------------------------
+
+descriptions::[Item]->[String]
+descriptions items = concat $ map descriptions' (map describe items)
+
+descriptions'::Maybe String -> [String]
+descriptions' (Just s) = [s]
+descriptions' Nothing = []
+
 -- Generate a description of an item.
 -- Invisible items have empty descriptions.
 describe::Item->Maybe String
-describe (Item mods) = case nouns of
+describe mods = case nouns of
   [] -> Nothing
   _  -> Just $ (format adjectives) ++ (format' nouns)
   where adjectives = take 5 $ toList $ moduleFoldS adjectify mods
-        nouns      = moduleFold nounify   mods
+        nouns      = moduleFold nounify mods
         format = foldr (\word words -> case words of
           [] -> word ++ " "
           _  -> word ++ ", " ++ words) []
@@ -280,6 +291,14 @@ nounify _ = []
 -- Item generation:
 --------------------------------------------------------------------------------
 
+combine::Item->Item->Item
+combine ms ns = normalize $ lgen 1 $ alternate ms ns
+
+alternate::[a]->[a]->[a]
+alternate [] xs = xs
+alternate (y:ys) xs = y : (alternate xs ys)
+
+-- Random item generation ------------------------------------------------------
 getRandom::(Random a) => (a, a) -> State StdGen a
 getRandom (low, hi) = state (randomR (low, hi))
 
@@ -292,8 +311,8 @@ newItem = do
   nums <- getRandoms (0, num_modules - 1) numMods
   modules <- mapM generateModule nums
   rounds <- getRandom (1, 50)
-  let item = lgen rounds modules
-  return $ Item item
+  let item = normalize $ lgen rounds modules
+  return $ item
 
 generateModule::Int->State StdGen Module
 generateModule 0 = do
@@ -333,7 +352,7 @@ generateModule 12 = return Break
 
 -- "Normalize" a list of modules (e.g. condense magnitudes).
 normalize::[Module]->[Module]
-normalize = normalizeMagnify
+normalize = \x -> x
 
 normalizeMagnify = foldr (\m ms -> case m of
   Magnify x -> case ms of

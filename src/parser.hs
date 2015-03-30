@@ -48,6 +48,7 @@ import qualified Text.ParserCombinators.Parsec.Token as Token
 data Action = AVerb Verb
             | ATarget Verb Preposition Noun
             | AConjunction Action Action
+            | AError String
             deriving Show
 data Preposition = PIn | POf | PTo | POn deriving Show
 data Conjunction = Conj deriving Show
@@ -91,7 +92,7 @@ parens      = Token.parens      lexer
 parseCommand::String->Action
 parseCommand s =
   case parse clean "" s of
-    Left  e -> error $ show e
+    Left  e -> AError (show e)
     Right r -> r
 
 -- Cleans up initial whitespace (parser only handles whitespace after tokens).
@@ -122,7 +123,7 @@ conjAction = do
   return $ AConjunction a1 a2
 
 verb :: Parser Verb
-verb = verbWith <|> verbC <|> verbB <|> verbD <|> verbE <|> verbA
+verb = verbC <|> verbB <|> verbD <|> verbE <|> verbA
 
 verbWith = do
   var <- identifier
