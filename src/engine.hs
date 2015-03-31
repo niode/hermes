@@ -11,6 +11,7 @@ import Data.List
 import System.Random
 import Parser
 import Items
+import Utils
 
 data UIDescriptionResponse
   = UIDExit
@@ -120,11 +121,27 @@ runCommand (AVerb (UseTarget noun prep noun')) =
 runCommand (AVerb (Do noun prep noun')) = doFunction noun prep noun'
 runCommand (AVerb (Apply noun prep noun')) = applyFunction noun prep noun'
 
+runCommand (AError s) = unknownFunction s
+runCommand _ = noneFunction
+
 constFunction::String->State GameState UIResponse
-constFunction "exit" = exitFunction
-constFunction "item" = itemFunction
-constFunction "combine" = combineFunction
-constFunction s = return $ uiDescription $ "command " ++ s
+constFunction s = do
+  cmd <- constCommand s
+  rsp <- cmd
+  return rsp
+
+
+constCommand::String->State GameState CommandFunction
+constCommand s = do
+  inv <- getInventory
+  let commands = concat $ map (moduleFold constItemCommands) inv
+  let matches = filter (commandFilter s) commands
+  case matches of
+    []    -> return $ unknownFunction s
+    (c:_) -> return $ function c
+
+commandFilter::String->Command->Bool
+commandFilter s c = any (\name -> name == s) (names c)
 
 withFunction::String->Noun->State GameState UIResponse
 withFunction string (NounConst noun) = return $
@@ -147,13 +164,55 @@ applyFunction::Noun->Preposition->Noun->State GameState UIResponse
 applyFunction (NounConst n) _ (NounConst m) = return $
   uiDescription "got a lot on my plate"
 
+-- Gets a list of items whose description matches the string.
+getNoun::Noun->State GameState [Item]
+getNoun (NounConst s) = do
+  inv <- getInventory
+  return $ itemMatches s inv
+
+-- Returns a list of items whose description matches the string.
+itemMatches::String->[Item]->[Item]
+itemMatches s = filter ((isInfixOf s) . (\x -> case x of
+  Nothing -> ""
+  Just d  -> d) . describe)
+
 --------------------------------------------------------------------------------
 -- Item commands
 --------------------------------------------------------------------------------
 
+constItemCommands::([Module], Module, [Module]) -> [Command]
+constItemCommands (p, m, ms) = case (p, m, ms) of
+  (_, Walk props, _) -> [walkCommand props]
+  (_, Examine props, _) -> [examineCommand props]
+  (_, System, _) -> [itemCommand, exitCommand, combineCommand]
+  _ -> []
+
+walkCommand::LWalkProp->Command
+walkCommand props = Command ["walk", "go", "run"] (walkFunction props)
+
+walkFunction::LWalkProp->CommandFunction
+walkFunction props = return $ uiDescription "But where?"
+
+examineCommand::LExamineProp->Command
+examineCommand props = Command ["look"] (examineFunction props)
+
+examineFunction::LExamineProp->CommandFunction
+examineFunction props = return $ uiDescription "You take a look around."
+
 --------------------------------------------------------------------------------
 -- System commands
 --------------------------------------------------------------------------------
+
+noneFunction::CommandFunction
+noneFunction = return $ uiDescription $ "not implemented"
+
+unknownCommand::String->Command
+unknownCommand s = Command [] $ unknownFunction s
+
+unknownFunction::String->CommandFunction
+unknownFunction s = return $ uiDescription $
+  "You don't know how to \"" ++ s ++ "\""
+
 exitCommand::Command
 exitCommand = Command ["exit"] exitFunction
 
@@ -175,6 +234,9 @@ printInventory = do
   items <- getInventory
   let desc = descriptions items
   return $ (concat . (intersperse "\n")) desc
+
+combineCommand::Command
+combineCommand = Command ["combine"] combineFunction
 
 combineFunction::CommandFunction
 combineFunction = do

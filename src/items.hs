@@ -1,6 +1,8 @@
 module Items
   ( Item
   , Module(..)
+  , LExamineProp(..)
+  , LWalkProp(..)
   , moduleFold
   , combine
   , describe
@@ -12,6 +14,7 @@ import Control.Monad.State
 import Control.Monad (replicateM, mapM)
 import Data.Set (Set, insert, empty, toList)
 import Data.List as List
+import Utils
 
 type Item = [Module]
 
@@ -104,11 +107,7 @@ hasExamine prop = foldr (\p v -> v || (p == prop)) False
 --------------------------------------------------------------------------------
 
 descriptions::[Item]->[String]
-descriptions items = concat $ map descriptions' (map describe items)
-
-descriptions'::Maybe String -> [String]
-descriptions' (Just s) = [s]
-descriptions' Nothing = []
+descriptions items = mlist (map describe items)
 
 -- Generate a description of an item.
 -- Invisible items have empty descriptions.
