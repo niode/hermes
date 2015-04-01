@@ -3,6 +3,7 @@ module UnitTests where
 import Test.HUnit
 import Parser
 import Items
+import Engine
 
 
 --run all tests
@@ -13,7 +14,12 @@ allTests = TestList [
   TestLabel "parseCommandAVerbTest" parseCommandAVerbTest,
   TestLabel "parseCommandAVerbTest2" parseCommandAVerbTest2,
   TestLabel "alternateTest" alternateTest
+  
   ]
+
+--TestLabel "initStateTest" initStateTest
+--TestLabel "eventNameTest" eventNameTest
+--
 
 
 --individual tests. Format is: assertEqual <Error message> <Expected> <Actual>
@@ -24,6 +30,16 @@ parseCommandAVerbTest = TestCase $ assertEqual
 
 parseCommandAVerbTest2 = TestCase $ assertEqual
   "Should get a Verb Action from parseCommand" (AVerb (UseTarget (NounConst "FlashDrive") POn (NounConst "self"))) (parseCommand "use FlashDrive on self")
+
+--engine tests
+--getResponseTest = TestCase $ assertEqual
+--  "Incorrect response" () (getResponse "do thing on that")
+
+--eventNameTest = TestCase $ assertEqual
+--  "Should return event's name" ("test") (eventName ItemPickup ([Fly]) ("test1") Item [Fly] "test")
+
+--initStateTest = TestCase $ assertEqual
+--  "Incorrect initState" (GameState) (initState StdGen)
 
 
 
