@@ -10,6 +10,6 @@ Install vty-ui with
 Build:
 --
 
-    ghc --make Main.hs
+    ghc -threaded --make Main.hs
 
 will produce the executable Main

@@ -14,6 +14,10 @@ import Control.Monad (replicateM, mapM)
 import Data.Set as Set (Set, insert, empty, toList, fromList)
 import Data.List as List
 
+-- Constants
+max_mods = 100 :: Int     -- Number of modules in a generated item.
+max_rounds = 100 :: Int   -- Number of rounds to run L-System.
+
 type Item = [Module]
 
 data Module = Magnify Int           -- Make things better
@@ -280,10 +284,10 @@ getRandoms (low, hi) n = replicateM n (getRandom (low, hi))
 
 newItem::State StdGen Item
 newItem = do
-  numMods <- getRandom (0, 100)
+  numMods <- getRandom (0, max_mods)
   nums <- getRandoms (0, num_modules - 1) numMods
   modules <- mapM generateModule nums
-  rounds <- getRandom (1, 50)
+  rounds <- getRandom (1, max_rounds)
   let item = normalize $ lgen rounds modules
   return $ item
 

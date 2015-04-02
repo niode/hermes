@@ -13,6 +13,10 @@ main = runTestTT allTests
 allTests = TestList [
   TestLabel "parseCommandAVerbTest" parseCommandAVerbTest,
   TestLabel "parseCommandAVerbTest2" parseCommandAVerbTest2
+<<<<<<< HEAD:src/unitTests.hs
+=======
+  --TestLabel "alternateTest" alternateTest
+>>>>>>> c0990669dfc8524cdb330589a98989e6380081bb:src/UnitTests.hs
   
   ]
 
@@ -43,8 +47,15 @@ parseCommandAVerbTest2 = TestCase $ assertEqual
 
 
 --items tests
+<<<<<<< HEAD:src/unitTests.hs
 --alternateTest = TestCase $ assertEqual
 -- "Proper alternate" ([4,1,5,2,6,3]) (alternate [1,2,3] [4,5,6])
+=======
+{-
+alternateTest = TestCase $ assertEqual
+  "Proper alternate" ([4,1,5,2,6,3]) (alternate [1,2,3] [4,5,6])
+-}
+>>>>>>> c0990669dfc8524cdb330589a98989e6380081bb:src/UnitTests.hs
 
 --combineTest = TestCase $ assertEqual
 --  "Should return an Item" ([Fly,Rad,Fly,Rad]) (combine [Fly, Rad] [Fly, Rad])
