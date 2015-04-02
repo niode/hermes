@@ -1,14 +1,15 @@
 Requirements:
 --
+
 - vty-ui
 
 Install vty-ui with
 
-  cabal install vty-ui
+    cabal install vty-ui
 
 Build:
 --
 
-  ghc --make Main.hs
+    ghc --make Main.hs
 
 will produce the executable Main
