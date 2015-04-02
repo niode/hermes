@@ -2,3 +2,7 @@
 *.aux
 *.idx
 *.log
+*.hi
+*.o
+*.tix
+*.mix
