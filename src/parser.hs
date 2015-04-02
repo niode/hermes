@@ -49,6 +49,7 @@ data Action = AVerb Verb
             | ATarget Verb Preposition Noun
             | AConjunction Action Action
             | AError String
+            | ANull
             deriving (Show, Eq)
 data Preposition = PIn | POf | PTo | POn deriving (Show, Eq)
 data Conjunction = Conj deriving (Show, Eq)
@@ -90,6 +91,7 @@ whitespace  = Token.whiteSpace  lexer
 parens      = Token.parens      lexer
 
 parseCommand::String->Action
+parseCommand [] = ANull
 parseCommand s =
   case parse clean "" s of
     Left  e -> AError (show e)

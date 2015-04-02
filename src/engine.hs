@@ -30,20 +30,6 @@ data GameState = GameState  { inventory :: [Item]
 
 type CommandFunction = State GameState UIResponse
 data Command = Command {names :: [String], function :: CommandFunction}
-
-processEvents::UIResponse->State GameState UIResponse
-processEvents old = do
-  list <- getEvents
-  let new = foldr appendDescription old $ mlist (map story list)
-  setEvents []
-  return new
-
--- Append a description to an existing one.
-appendDescription::String->UIResponse->UIResponse
-appendDescription new (UIResponse (Just (UIDString old)) inv) =
-  UIResponse (Just (UIDString (old ++ "\n\n" ++ new))) inv
-appendDescription _ resp = resp
-
 uiDescription::String->UIResponse
 uiDescription s = UIResponse (Just (UIDString s)) Nothing
 
@@ -107,6 +93,9 @@ getNewItem = do
 initState :: StdGen -> GameState
 initState rng = GameState [baseSystem, baseInventory] rng [StoryEvent "intro"]
 
+--------------------------------------------------------------------------------
+-- Initial game state
+--------------------------------------------------------------------------------
 baseInventory = [Upgrade, Magnify 10, Carry]
 baseSystem = [System]
 
@@ -117,9 +106,32 @@ getResponse cmd = do
   resp <- runCommand command
   processEvents resp
 
+-- Calculate the description of the events.
+processEvents::UIResponse->State GameState UIResponse
+processEvents old = do
+  list <- getEvents
+  let new = foldr appendDescription old $ mlist (map story list)
+  setEvents [] -- Clear the events.
+  return new
 
--- Read the syntax tree
+-- Append a description to an existing one.
+appendDescription::String->UIResponse->UIResponse
+
+-- Update existing description.
+appendDescription new (UIResponse (Just (UIDString old)) inv) =
+  UIResponse (Just (UIDString (old ++ "\n\n" ++ new))) inv
+
+-- Add new description.
+appendDescription new (UIResponse Nothing inv) =
+  UIResponse (Just (UIDString new)) inv
+
+appendDescription _ resp = resp
+
+--------------------------------------------------------------------------------
+-- Parse the syntax tree from the parser
+--------------------------------------------------------------------------------
 runCommand::Action->State GameState UIResponse
+runCommand ANull = nullFunction
 runCommand (AVerb (VerbConst s)) = constFunction s
 runCommand (AVerb (With string noun)) = withFunction string noun
 runCommand (AVerb (Use noun)) = useFunction noun
@@ -132,12 +144,16 @@ runCommand (AVerb (Apply noun prep noun')) = applyFunction noun prep noun'
 runCommand (AError s) = unknownFunction s
 runCommand _ = noneFunction
 
+nullFunction::State GameState UIResponse
+nullFunction = do
+  items <- getInventory
+  return $ uiInventory $ printInventory items
+  
 constFunction::String->State GameState UIResponse
 constFunction s = do
   cmd <- constCommand s
   rsp <- cmd
   return rsp
-
 
 constCommand::String->State GameState CommandFunction
 constCommand s = do
@@ -234,14 +250,11 @@ itemFunction::CommandFunction
 itemFunction = do
   item <- getNewItem
   putInventory item
-  inv <- printInventory
-  return $ uiInventory inv
+  inv <- getInventory
+  return $ uiInventory (printInventory inv)
 
-printInventory::State GameState String
-printInventory = do
-  items <- getInventory
-  let desc = descriptions items
-  return $ (concat . (intersperse "\n")) desc
+printInventory::[Item]->String
+printInventory = concat . (intersperse "\n") . descriptions
 
 combineCommand::Command
 combineCommand = Command ["combine"] combineFunction
@@ -250,5 +263,4 @@ combineFunction::CommandFunction
 combineFunction = do
   (a:b:inv) <- getInventory
   setInventory $ (combine a b) : inv
-  str <- printInventory
-  return $ uiInventory str
+  return $ uiInventory $ printInventory inv

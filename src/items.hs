@@ -350,13 +350,16 @@ lgen::Int->[Module]->[Module]
 lgen 0 m = m
 lgen n m = lgen (n-1) $ moduleFold lgen_rules m
 
+--------------------------------------------------------------------------------
+-- L-System generation.
+--------------------------------------------------------------------------------
 lgen_rules::([Module], Module, [Module])->[Module]
 lgen_rules (p, m, ms) = case (p, m, ms) of
   -- Magnifications
   (_, Magnify a, Magnify b : _) -> [Magnify (a + b)]
   (Magnify _ : _, Magnify _, _) -> []
 
-  -- Expendable things
+  -- Expend
   (_, Expend b, Expend a : _) -> [Expend (a + b)]
   (Expend a : _, Expend _, _) -> []
 
@@ -374,4 +377,6 @@ lgen_rules (p, m, ms) = case (p, m, ms) of
   (Grasp : _, Magnify a, Grasp : _) -> []
   (Magnify a : Grasp : _, Grasp, _) -> []
 
+  -- Fly
+  (_, Fly, Fly : _) -> [Magnify 2, Fly]
   _ -> [m]

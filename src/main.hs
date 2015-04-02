@@ -54,6 +54,8 @@ main = do
   c <- newCollection
   addToCollection c ui fg
 
+  updateUI output inventory input gameState $ wrapResponse gameState ""
+
   -- Process input.
   input `onActivate` \this ->
     getEditText this >>=
