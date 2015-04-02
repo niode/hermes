@@ -4,9 +4,9 @@ module Items
   , LExamineProp(..)
   , LWalkProp(..)
   , moduleFold
+  , moduleFoldS
   , combine
   , describe
-  , descriptions
   , newItem) where
 
 import System.Random
@@ -32,7 +32,7 @@ data Module = Magnify Int           -- Make things better
             | Expend Int            -- Item can be expended
             | Break                 -- Indicates a breakpoint
             | System                -- System commands, e.g. "exit"
-            deriving (Show)
+            deriving (Show, Eq)
 
 num_modules = 13 :: Int
 
@@ -58,11 +58,11 @@ class PropertyList t where
   combineProp :: t -> t -> t
 
 -- Walk properties -------------------------------------------------------------
-newtype LWalkProp = LWalkProp {wprop :: [WalkProp]} deriving Show
+newtype LWalkProp = LWalkProp {wprop :: [WalkProp]} deriving (Show, Eq)
 data WalkProp
   = Smooth Int  -- Can walk over smooth terrain.
   | Rough  Int  -- Can walk over rough terrain.
-  deriving Show
+  deriving (Show, Eq)
 
 instance PropertyList LWalkProp where
   combineProp p1 p2 = LWalkProp [Smooth (walkSmooth p1), Rough (walkRough p2)]
@@ -91,7 +91,7 @@ data ExamineProp
 
 num_examineprops = 5
 
-newtype LExamineProp = LExamineProp {eprop :: [ExamineProp]} deriving Show
+newtype LExamineProp = LExamineProp {eprop :: [ExamineProp]} deriving (Show, Eq)
 instance PropertyList LExamineProp where
   -- Ensure each element in the list is unique
   combineProp p1 p2 = LExamineProp $
@@ -105,9 +105,6 @@ hasExamine prop = foldr (\p v -> v || (p == prop)) False
 --------------------------------------------------------------------------------
 -- Description generation:
 --------------------------------------------------------------------------------
-
-descriptions::[Item]->[String]
-descriptions items = mlist (map describe items)
 
 -- Generate a description of an item.
 -- Invisible items have empty descriptions.
@@ -338,13 +335,12 @@ generateModule 12 = return Break
 
 -- "Normalize" a list of modules (e.g. condense magnitudes).
 normalize::[Module]->[Module]
-normalize = \x -> x
+normalize = foldr normalize' []
 
-normalizeMagnify = foldr (\m ms -> case m of
-  Magnify x -> case ms of
-    [] -> [Magnify x]
-    (Magnify y : ns) -> Magnify (x + y) : ns
-  _ -> ms) []
+normalize'::Module->[Module]->[Module]
+normalize' (Magnify n) (Magnify m : ms) = Magnify (n+m) : ms
+
+normalize' mod ms = mod:ms
 
 lgen::Int->[Module]->[Module]
 lgen 0 m = m
@@ -373,10 +369,25 @@ lgen_rules (p, m, ms) = case (p, m, ms) of
   (_, Grasp, Grasp : _) -> [Magnify 2, Grasp]
   (Grasp : _, Grasp, _) -> []
 
-  (Magnify a : _, Grasp, Magnify b : Grasp : _) -> [Magnify (a + b), Grasp]
-  (Grasp : _, Magnify a, Grasp : _) -> []
-  (Magnify a : Grasp : _, Grasp, _) -> []
+  -- Carry
+  (_, Carry, Carry : _) -> [Magnify 2, Carry]
 
   -- Fly
   (_, Fly, Fly : _) -> [Magnify 2, Fly]
+
+  -- Illuminate
+  (_, Illuminate, Illuminate : _) -> [Magnify 2, Illuminate]
+
+  (Magnify n : _, Illuminate, _) -> if n > 20
+    then [Illuminate, Fire]
+    else [Illuminate]
+
+  (m1 : _, Magnify a, m2 : _) -> if m1 == m2
+    then [Magnify (a + 1), m1]
+    else [Magnify a]
+  
+  (_, m1, Magnify _ : m2 : _) -> if m1 == m2
+    then []
+    else [m1]
+
   _ -> [m]

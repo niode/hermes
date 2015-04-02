@@ -94,7 +94,7 @@ parseCommand::String->Action
 parseCommand [] = ANull
 parseCommand s =
   case parse clean "" s of
-    Left  e -> AError (show e)
+    Left  e -> AError s
     Right r -> r
 
 -- Cleans up initial whitespace (parser only handles whitespace after tokens).

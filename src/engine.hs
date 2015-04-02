@@ -8,11 +8,13 @@ module Engine
 
 import Control.Monad.State
 import Data.List
+import Data.Maybe
 import System.Random
 import Parser
 import Items
 import Utils
 import Story
+import Data.Set as Set (fromList, toList)
 
 data UIDescriptionResponse
   = UIDExit
@@ -158,11 +160,19 @@ constFunction s = do
 constCommand::String->State GameState CommandFunction
 constCommand s = do
   inv <- getInventory
-  let commands = concat $ map (moduleFold constItemCommands) inv
-  let matches = filter (commandFilter s) commands
+  let matches = filter (commandFilter s) $ listConstCommands inv
   case matches of
     []    -> return $ unknownFunction s
     (c:_) -> return $ function c
+
+listCommandNames = toList
+    . fromList
+    . concat
+    . (map (moduleFold ((foldr f []) . constItemCommands)))
+  where f (Command names _) ls = names ++ ls
+
+listConstCommands::[Item]->[Command]
+listConstCommands =  concat . (map (moduleFold constItemCommands))
 
 commandFilter::String->Command->Bool
 commandFilter s c = any (\name -> name == s) (names c)
@@ -196,9 +206,8 @@ getNoun (NounConst s) = do
 
 -- Returns a list of items whose description matches the string.
 itemMatches::String->[Item]->[Item]
-itemMatches s = filter ((isInfixOf s) . (\x -> case x of
-  Nothing -> ""
-  Just d  -> d) . describe)
+itemMatches s = mapMaybe (\item ->
+  do desc <- describe item; if (isInfixOf s desc) then Just item else Nothing)
 
 --------------------------------------------------------------------------------
 -- Item commands
@@ -234,8 +243,12 @@ unknownCommand::String->Command
 unknownCommand s = Command [] $ unknownFunction s
 
 unknownFunction::String->CommandFunction
-unknownFunction s = return $ uiDescription $
-  "You don't know how to \"" ++ s ++ "\""
+unknownFunction s = do
+  inv <- getInventory
+  let list = concat . (intersperse "\n") . numberList $ listCommandNames inv
+  return $ uiDescription $
+    "You don't know how to \"" ++ s ++ "\". Try:\n" ++ list
+  where names = concat . (map (\x -> case x of (Command ls _) -> ls))
 
 exitCommand::Command
 exitCommand = Command ["exit"] exitFunction
@@ -254,7 +267,7 @@ itemFunction = do
   return $ uiInventory (printInventory inv)
 
 printInventory::[Item]->String
-printInventory = concat . (intersperse "\n") . descriptions
+printInventory = concat . (intersperse "\n") . numberList . (mapMaybe describe)
 
 combineCommand::Command
 combineCommand = Command ["combine"] combineFunction
