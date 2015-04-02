@@ -12,6 +12,7 @@ import System.Random
 import Parser
 import Items
 import Utils
+import Story
 
 data UIDescriptionResponse
   = UIDExit
@@ -23,26 +24,25 @@ data UIInventoryResponse
 data UIResponse
   = UIResponse (Maybe UIDescriptionResponse) (Maybe UIInventoryResponse)
 
-data Event
-  = ItemPickup Item String
-  | ItemDrop Item String
-
-instance Eq Event where
-  (ItemPickup _ s) == (ItemPickup _ t) = s == t
-  (ItemDrop _ s) == (ItemDrop _ t) = s == t
-  _ == _ = False
-
--- Get the event's name
-eventName::Event->String
-eventName (ItemPickup _ s) = s
-eventName (ItemDrop _ s) = s
-
 data GameState = GameState  { inventory :: [Item]
                             , rng :: StdGen
                             , events :: [Event]}
 
 type CommandFunction = State GameState UIResponse
 data Command = Command {names :: [String], function :: CommandFunction}
+
+processEvents::UIResponse->State GameState UIResponse
+processEvents old = do
+  list <- getEvents
+  let new = foldr appendDescription old $ mlist (map story list)
+  setEvents []
+  return new
+
+-- Append a description to an existing one.
+appendDescription::String->UIResponse->UIResponse
+appendDescription new (UIResponse (Just (UIDString old)) inv) =
+  UIResponse (Just (UIDString (old ++ "\n\n" ++ new))) inv
+appendDescription _ resp = resp
 
 uiDescription::String->UIResponse
 uiDescription s = UIResponse (Just (UIDString s)) Nothing
@@ -70,6 +70,7 @@ getRng = state $ \gs -> ((rng gs), gs)
 setRng::StdGen->State GameState ()
 setRng rng = state $ \(GameState inv _ events) -> ((), GameState inv rng events)
 
+-- Get an item with the given name.
 getItem::String->State GameState (Maybe Item)
 getItem name = do
   inv <- getInventory
@@ -77,12 +78,17 @@ getItem name = do
     then return $ Just (inv !! 0)
     else return Nothing
 
+-- Get the nth item.
 getItemI::Int->State GameState (Maybe Item)
 getItemI n = do
   inv <- getInventory
   if n >= 0 && n < (length inv)
     then return $ Just $ inv !! n
     else return Nothing
+
+setEvents::[Event] -> State GameState ()
+setEvents ev = state $
+  \(GameState is rng _) -> ((), GameState is rng ev)
 
 putEvent::Event->State GameState ()
 putEvent event = state $
@@ -99,7 +105,7 @@ getNewItem = do
   return item
 
 initState :: StdGen -> GameState
-initState rng = GameState [baseSystem, baseInventory] rng []
+initState rng = GameState [baseSystem, baseInventory] rng [StoryEvent "intro"]
 
 baseInventory = [Upgrade, Magnify 10, Carry]
 baseSystem = [System]
@@ -108,7 +114,9 @@ baseSystem = [System]
 getResponse::String->State GameState UIResponse
 getResponse cmd = do
   let command = parseCommand cmd
-  runCommand command
+  resp <- runCommand command
+  processEvents resp
+
 
 -- Read the syntax tree
 runCommand::Action->State GameState UIResponse
