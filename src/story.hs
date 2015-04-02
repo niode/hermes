@@ -25,11 +25,10 @@ eventName (ItemPickup _ s) = s
 eventName (ItemDrop _ s) = s
 
 story::Event->Maybe String
-story event = slookup eventDictionary event
+story event = lookup event eventDictionary
 
 eventDictionary :: Dictionary
 eventDictionary = [
-
   (StoryEvent "intro",
     "With a burst of electricity, you awaken. You are a robot. You know this"
     ++ " becuase you hava an identifySelf(); function. You are modular. You have"
@@ -74,9 +73,3 @@ eventDictionary = [
   )
 
   ]
-
-slookup::Dictionary->Event->Maybe String
-slookup [] _ = Nothing
-slookup ((event, str):dict) key = if key == event
-  then Just str
-  else slookup dict key

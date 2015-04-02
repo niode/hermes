@@ -34,11 +34,11 @@ main = do
   title <- plainText (T.pack "Game time!")
 
   -- The responses will go in here.
-  output <- plainText (T.pack "This is where the output goes.")
+  output <- plainText (T.pack "")
   boutput <- bordered =<< ((return output) <++> (hFill ' ' 1) <--> (vFill ' '))
 
   -- The inventory.
-  inventory <- plainText (T.pack "This is where the inventory goes.")
+  inventory <- plainText (T.pack "")
   binventory <- bordered =<< (return inventory)
 
   -- The window where all the descriptive stuff will be.
