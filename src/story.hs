@@ -1,6 +1,5 @@
 module Story
   ( Event(..)
-  , eventName
   , story
   ) where
 
@@ -19,11 +18,6 @@ instance Eq Event where
   (StoryEvent s) == (StoryEvent t) = s == t
   _ == _ = False
 
--- Get the event's name
-eventName::Event->String
-eventName (ItemPickup _ s) = s
-eventName (ItemDrop _ s) = s
-
 story::Event->Maybe String
 story event = lookup event eventDictionary
 
@@ -31,17 +25,20 @@ eventDictionary :: Dictionary
 eventDictionary = [
   (StoryEvent "intro",
     "With a burst of electricity, you awaken. You are a robot. You know this"
-    ++ " becuase you hava an identifySelf(); function. You are modular. You have"
-    ++ " four slots to equip various items. Some would mistake these as two \"arm\" "
-    ++ " slots and two \"leg\" slots, but you know better. You could equip anything to these slots."
+    ++ " because you have an identifySelf() function. You are modular. You have"
+    ++ " four slots to equip various items. Some would mistake these as two"
+    ++ " \"arm\" slots and two \"leg\" slots, but you know better. You could"
+    ++ " equip anything to these slots."
   ),
 
   (StoryEvent "start",
-   "You are alone in a dark place. Fortunately, you currently have a flash light equipped in one slot."
+   "You are alone in a dark place. Fortunately, you currently have a flash"
+   ++ " light equipped in one slot."
   ),
 
   (StoryEvent "use flashLight",
-   "You turn on your flash light. You see a tool arm on the ground. It has various cool tools you might want to use."
+   "You turn on your flash light. You see a tool arm on the ground. It has"
+   ++ "various cool tools you might want to use."
   ),
 
   (StoryEvent "attach arm",
@@ -53,11 +50,15 @@ eventDictionary = [
   ),
 
   (StoryEvent "flash drive found",
-   "There is a usb flash drive sitting on the ground next to you. Normally you wouldn't trust a random flash drive, but something about this one looks comforting, and trustworthy."
+   "There is a usb flash drive sitting on the ground next to you. Normally you"
+   ++ " wouldn't trust a random flash drive, but something about this one looks"
+   ++ " comforting, and trustworthy."
   ),
 
   (StoryEvent "plug flash drive in",
-   "You plug the flash drive into a spare usb 3.0 slot on your head. Immediately, apop-up flashes across your vision. It says, simply, \"Would you like to install Linux?\""
+   "You plug the flash drive into a spare usb 3.0 slot on your head."
+   ++ " Immediately, apop-up flashes across your vision. It says, simply,"
+   ++ "\"Would you like to install Linux?\""
   ),
 
   (StoryEvent "virus appears",
@@ -65,11 +66,13 @@ eventDictionary = [
   ),
 
   (StoryEvent "linux installed",
-   "You successfully installed Linux on yourself! That was far easier to do than you had heard. You are now immune to the virus that suddenly appears, trying to infect your system."
+   "You successfully installed Linux on yourself! That was far easier to do"
+   ++ "than you had heard. You are now immune to the virus that suddenly"
+   ++ "appears, trying to infect your system."
   ),
 
   (StoryEvent "game finished",
-   "With a burst of electricity, the computer virus disappears. You are safe. For now."
+   "With a burst of electricity, the computer virus disappears. You are safe."
+   ++ "For now."
   )
-
   ]

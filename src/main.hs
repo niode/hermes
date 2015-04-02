@@ -36,6 +36,7 @@ main = do
   -- The responses will go in here.
   output <- plainText (T.pack "")
   boutput <- bordered =<< ((return output) <++> (hFill ' ' 1) <--> (vFill ' '))
+  setTextFormatter output wrap
 
   -- The inventory.
   inventory <- plainText (T.pack "")

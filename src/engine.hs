@@ -12,7 +12,7 @@ import Data.Maybe
 import System.Random
 import Parser
 import Items
-import Utils
+import Format
 import Story
 import Data.Set as Set (fromList, toList)
 
@@ -112,7 +112,7 @@ getResponse cmd = do
 processEvents::UIResponse->State GameState UIResponse
 processEvents old = do
   list <- getEvents
-  let new = foldr appendDescription old $ mlist (map story list)
+  let new = foldr Engine.appendDescription old $ mapMaybe story list
   setEvents [] -- Clear the events.
   return new
 
@@ -121,7 +121,7 @@ appendDescription::String->UIResponse->UIResponse
 
 -- Update existing description.
 appendDescription new (UIResponse (Just (UIDString old)) inv) =
-  UIResponse (Just (UIDString (old ++ "\n\n" ++ new))) inv
+  UIResponse (Just (UIDString (Format.appendDescription old new))) inv
 
 -- Add new description.
 appendDescription new (UIResponse Nothing inv) =
@@ -217,7 +217,8 @@ constItemCommands::([Module], Module, [Module]) -> [Command]
 constItemCommands (p, m, ms) = case (p, m, ms) of
   (_, Walk props, _) -> [walkCommand props]
   (_, Examine props, _) -> [examineCommand props]
-  (_, System, _) -> [itemCommand, exitCommand, combineCommand]
+  (_, Carry, _) -> [itemCommand, combineCommand]
+  (_, System, _) -> [exitCommand]
   _ -> []
 
 walkCommand::LWalkProp->Command
@@ -245,7 +246,7 @@ unknownCommand s = Command [] $ unknownFunction s
 unknownFunction::String->CommandFunction
 unknownFunction s = do
   inv <- getInventory
-  let list = concat . (intersperse "\n") . numberList $ listCommandNames inv
+  let list = (numberList . listCommandNames) inv
   return $ uiDescription $
     "You don't know how to \"" ++ s ++ "\". Try:\n" ++ list
   where names = concat . (map (\x -> case x of (Command ls _) -> ls))
@@ -267,7 +268,7 @@ itemFunction = do
   return $ uiInventory (printInventory inv)
 
 printInventory::[Item]->String
-printInventory = concat . (intersperse "\n") . numberList . (mapMaybe describe)
+printInventory = numberList . (mapMaybe describe)
 
 combineCommand::Command
 combineCommand = Command ["combine"] combineFunction
@@ -276,4 +277,5 @@ combineFunction::CommandFunction
 combineFunction = do
   (a:b:inv) <- getInventory
   setInventory $ (combine a b) : inv
-  return $ uiInventory $ printInventory inv
+  inv' <- getInventory
+  return $ uiInventory $ printInventory inv'

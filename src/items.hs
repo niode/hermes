@@ -4,7 +4,6 @@ module Items
   , LExamineProp(..)
   , LWalkProp(..)
   , moduleFold
-  , moduleFoldS
   , combine
   , describe
   , newItem) where
@@ -12,9 +11,8 @@ module Items
 import System.Random
 import Control.Monad.State
 import Control.Monad (replicateM, mapM)
-import Data.Set (Set, insert, empty, toList)
+import Data.Set as Set (Set, insert, empty, toList, fromList)
 import Data.List as List
-import Utils
 
 type Item = [Module]
 
@@ -45,14 +43,6 @@ moduleFold::(([Module], Module, [Module]) -> [a])->[Module]->[a]
 moduleFold f = moduleFold' f [] where
   moduleFold' f p [] = []
   moduleFold' f p (m:ms) = (f (p, m, ms)) ++ (moduleFold' f (m:p) ms)
-
-moduleFoldS::(Ord a)=>(([Module], Module, [Module]) -> [a])->[Module]->Set a
-moduleFoldS f = moduleFold' f [] where
-  moduleFold' f p [] = empty
-  moduleFold' f p (m:ms) = foldr
-    (\x s -> Data.Set.insert x s)
-    (moduleFold' f (m:p) ms)
-    (f (p, m, ms))
 
 class PropertyList t where
   combineProp :: t -> t -> t
@@ -112,7 +102,7 @@ describe::Item->Maybe String
 describe mods = case nouns of
   [] -> Nothing
   _  -> Just $ (format adjectives) ++ (format' nouns)
-  where adjectives = take 5 $ toList $ moduleFoldS adjectify mods
+  where adjectives = (take 5) . toList . fromList $ moduleFold adjectify mods
         nouns      = moduleFold nounify mods
         format = foldr (\word words -> case words of
           [] -> word ++ " "
