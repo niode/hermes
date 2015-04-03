@@ -6,6 +6,7 @@ import Items.Internal
 import Engine.Internal
 import System.Random
 import Control.Monad.State as S
+import Format
 import Story
 
 --run all tests
@@ -28,6 +29,7 @@ allTests = TestList [
   TestLabel "describeTest8" describeTest9,
   TestLabel "describeTest8" describeTest10
   
+
   ]
 
 --TestLabel "initStateTest" initStateTest
@@ -103,6 +105,43 @@ nounifyTest = TestCase $ assertEqual
   "Should return a list of Strings" (["fins", ""]) (nounify ([Fly], Fly, [Fly]))
 
 
+-- Formatting tests:
+formatTest1 = TestCase $ assertEqual
+  "Bad formatting." "fluffy, good phone" $
+  Format.item ["fluffy", "good"] ["phone"]
+
+formatTest2 = TestCase $ assertEqual
+  "Bad formatting." "ridiculous, excellent titanium toaster" $
+  Format.item ["ridiculous", "excellent"] ["titanium", "toaster"]
+
+formatTest3 = TestCase $ assertEqual
+  "Bad formatting." "" $ Format.adjectives []
+
+formatTest4 = TestCase $ assertEqual
+  "Bad formatting." "luminous" $ Format.adjectives ["luminous"]
+
+formatTest5 = TestCase $ assertEqual
+  "Bad formatting." "luminous, fantastic" $
+  Format.adjectives ["luminous", "fantastic"]
+
+formatTest6 = TestCase $ assertEqual
+  "Bad formatting." "mouse" $ Format.nouns ["mouse"]
+
+formatTest7 = TestCase $ assertEqual
+  "Bad formatting." "mouse trap" $ Format.nouns ["mouse", "trap"]
+
+formatTest8 = TestCase $ assertEqual
+  "Bad formatting." "" $ Format.nouns []
+
+formatTest9 = TestCase $ assertEqual
+  "Bad formatting." "" $ Format.numberList []
+
+formatTest10 = TestCase $ assertEqual
+  "Bad formatting." "[1]: first" $ Format.numberList ["first"]
+
+formatTest11 = TestCase $ assertEqual
+  "Bad formatting." "[1]: first\n[2]: second" $
+  Format.numberList ["first", "second"]
 
 {- not working
 parseCommandATargetTest = TestCase $ assertEqual
