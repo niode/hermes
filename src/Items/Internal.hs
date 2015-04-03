@@ -11,6 +11,7 @@ import Format
 max_mods = 100 :: Int     -- Number of modules in a generated item.
 max_rounds = 100 :: Int   -- Number of rounds to run L-System.
 max_magnify = 30 :: Int   -- Maximum magnitude of generated modules.
+max_expend = 50 :: Int    -- Maximum expend parameter.
 
 type Item = [Module]
 
@@ -96,6 +97,7 @@ hasExamine prop = foldr (\p v -> v || (p == prop)) False
 -- Description generation:
 --------------------------------------------------------------------------------
 
+-- Take a random n unique elements from a list.
 takeRandom::Int->[a]->State StdGen [a]
 takeRandom 0 _ = return []
 takeRandom _ [] = return []
@@ -179,6 +181,7 @@ adjectify (_, Upgrade, _) = ["unfinished"]
 adjectify (_, Expend n, _)
   | n < 3     = ["feeble"]
   | n < 10    = ["disposable"]
+  | n > 30    = ["sturdy"]
   | otherwise = ["destructible"]
 
 -- Break
@@ -311,9 +314,7 @@ newItem = do
 
 -- Generate random modules.
 generateModule::Int->State StdGen Module
-generateModule 0 = do
-  n <- getRandom (1, max_magnify)
-  return $ Magnify n
+generateModule 0 = getRandom (1, max_magnify) >>= return . Magnify
 
 generateModule 1 = do
   r <- getRandom (1, 5)
@@ -340,9 +341,7 @@ generateModule 9 = return Illuminate
 
 generateModule 10 = return Upgrade
 
-generateModule 11 = do
-  n <- getRandom (1, 10)
-  return $ Expend n
+generateModule 11 = getRandom (1, max_expend) >>= return . Expend
 
 generateModule 12 = return Break
 
