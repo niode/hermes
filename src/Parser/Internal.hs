@@ -11,7 +11,7 @@ import qualified Text.ParserCombinators.Parsec.Token as Token
  - Grammar:
  -  Statement := Action
  -
- -  Action := Verb | Verb Preposition Noun | Action Conjunction Action
+ -  Action := Verb | Verb Preposition Noun
  -
  -  Preposition := in | of | to | on
  -

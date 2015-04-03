@@ -5,10 +5,13 @@ import Control.Monad.State
 import Control.Monad (replicateM, mapM)
 import Data.Set as Set (Set, insert, empty, toList, fromList)
 import Data.List as List
+import Format
 
 -- Constants
 max_mods = 100 :: Int     -- Number of modules in a generated item.
 max_rounds = 100 :: Int   -- Number of rounds to run L-System.
+max_magnify = 30 :: Int   -- Maximum magnitude of generated modules.
+max_expend = 50 :: Int    -- Maximum expend parameter.
 
 type Item = [Module]
 
@@ -40,6 +43,7 @@ moduleFold f = moduleFold' f [] where
   moduleFold' f p [] = []
   moduleFold' f p (m:ms) = (f (p, m, ms)) ++ (moduleFold' f (m:p) ms)
 
+-- Class for lists of properties, which must have a way to combine them.
 class PropertyList t where
   combineProp :: t -> t -> t
 
@@ -54,6 +58,7 @@ instance PropertyList LWalkProp where
   combineProp p1 p2 = LWalkProp [Smooth (walkSmooth p1), Rough (walkRough p2)]
 
 -- For convenience:
+toWalk::[WalkProp] -> Module
 toWalk props = Walk (LWalkProp props)
 
 -- Get the smoothness/roughness values.
@@ -92,20 +97,37 @@ hasExamine prop = foldr (\p v -> v || (p == prop)) False
 -- Description generation:
 --------------------------------------------------------------------------------
 
+-- Take a random n unique elements from a list.
+takeRandom::Int->[a]->State StdGen [a]
+takeRandom 0 _ = return []
+takeRandom _ [] = return []
+takeRandom n ls = do
+  i <- getRandom (0, (length ls) - 1)
+  let e = ls!!i
+  next <- takeRandom (n-1) ((take (i-1) ls) ++ (drop i ls))
+  return $ e:next
+  
 -- Generate a description of an item.
 -- Invisible items have empty descriptions.
+describeRandom::Item->State StdGen (Maybe String)
+describeRandom mods = case nouns of
+  [] -> return Nothing
+  _  -> do
+    adjectives <- (takeRandom 5) . toList . fromList $ moduleFold adjectify mods
+    return $ Just $ Format.item adjectives nouns
+  where nouns = takeWhile (/= "") (moduleFold nounify mods)
+
 describe::Item->Maybe String
 describe mods = case nouns of
+   -- No nouns, don't describe this.
   [] -> Nothing
-  _  -> Just $ (format adjectives) ++ (format' nouns)
-  where adjectives = (take 5) . toList . fromList $ moduleFold adjectify mods
-        nouns      = moduleFold nounify mods
-        format = foldr (\word words -> case words of
-          [] -> word ++ " "
-          _  -> word ++ ", " ++ words) []
-        format' = foldr (\word words -> case word of
-          [] -> []
-          w  -> case words of [] -> w; _ -> w ++ " " ++ words) []
+
+  -- Combine the adjectives and nouns.
+  _  -> Just $ Format.item adjectives nouns
+  where -- Take the first 5 adjectives generated.
+        adjectives = (take 5) . toList . fromList $ moduleFold adjectify mods
+        -- Take all the nouns, but stop at a blank.
+        nouns      = takeWhile (/= "") (moduleFold nounify mods)
 
 --------------------------------------------------------------------------------
 -- ADJECTIFY
@@ -159,6 +181,7 @@ adjectify (_, Upgrade, _) = ["unfinished"]
 adjectify (_, Expend n, _)
   | n < 3     = ["feeble"]
   | n < 10    = ["disposable"]
+  | n > 30    = ["sturdy"]
   | otherwise = ["destructible"]
 
 -- Break
@@ -174,6 +197,8 @@ adjectify _ = []
 -- NOUNIFY
 -- Produce nouns to name an item.
 --------------------------------------------------------------------------------
+-- Returns a list of nouns. A null string means to terminate the noun at that
+-- point; only some nouns can be combined.
 nounify::([Module], Module, [Module])->[String]
 
 -- Magnify
@@ -263,17 +288,21 @@ nounify _ = []
 combine::Item->Item->Item
 combine ms ns = normalize $ lgen 1 $ alternate ms ns
 
+-- Alternate items in lists.
 alternate::[a]->[a]->[a]
 alternate [] xs = xs
 alternate (y:ys) xs = y : (alternate xs ys)
 
 -- Random item generation ------------------------------------------------------
+
+-- Helper functions:
 getRandom::(Random a) => (a, a) -> State StdGen a
 getRandom (low, hi) = state (randomR (low, hi))
 
 getRandoms::(Random a) => (a, a) -> Int -> State StdGen [a]
 getRandoms (low, hi) n = replicateM n (getRandom (low, hi))
 
+-- Generate a new random item.
 newItem::State StdGen Item
 newItem = do
   numMods <- getRandom (0, max_mods)
@@ -283,10 +312,9 @@ newItem = do
   let item = normalize $ lgen rounds modules
   return $ item
 
+-- Generate random modules.
 generateModule::Int->State StdGen Module
-generateModule 0 = do
-  n <- getRandom (1, 30)
-  return $ Magnify n
+generateModule 0 = getRandom (1, max_magnify) >>= return . Magnify
 
 generateModule 1 = do
   r <- getRandom (1, 5)
@@ -313,9 +341,7 @@ generateModule 9 = return Illuminate
 
 generateModule 10 = return Upgrade
 
-generateModule 11 = do
-  n <- getRandom (1, 10)
-  return $ Expend n
+generateModule 11 = getRandom (1, max_expend) >>= return . Expend
 
 generateModule 12 = return Break
 
