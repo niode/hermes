@@ -132,7 +132,11 @@ appendDescription _ resp = resp
 -- Parse the syntax tree from the parser
 --------------------------------------------------------------------------------
 runCommand::Action->State GameState UIResponse
+
+-- Null command.
 runCommand ANull = nullFunction
+
+-- Regular command.
 runCommand (AVerb (VerbConst s)) = constFunction s
 runCommand (AVerb (With string noun)) = withFunction string noun
 runCommand (AVerb (Use noun)) = useFunction noun
@@ -142,20 +146,24 @@ runCommand (AVerb (UseTarget noun prep noun')) =
 runCommand (AVerb (Do noun prep noun')) = doFunction noun prep noun'
 runCommand (AVerb (Apply noun prep noun')) = applyFunction noun prep noun'
 
+-- Parsing error.
 runCommand (AError s) = unknownFunction s
 runCommand _ = noneFunction
 
+-- Null function : update the inventory.
 nullFunction::State GameState UIResponse
 nullFunction = do
   items <- getInventory
   return $ uiInventory $ printInventory items
-  
+
+-- "Constant" function (i.e. no arguments).
 constFunction::String->State GameState UIResponse
 constFunction s = do
   cmd <- constCommand s
   rsp <- cmd
   return rsp
 
+-- "Constant" command. Check if the command matches any given by items.
 constCommand::String->State GameState CommandFunction
 constCommand s = do
   inv <- getInventory
@@ -164,15 +172,18 @@ constCommand s = do
     []    -> return $ unknownFunction s
     (c:_) -> return $ function c
 
-listCommandNames = toList
-    . fromList
+-- List all "constant" command names available.
+listCommandNames = toList -- Pull out of set.
+    . fromList -- Put in set to remove duplicates.
     . concat
     . (map (moduleFold ((foldr f []) . constItemCommands)))
   where f (Command names _) ls = names ++ ls
 
+-- List all "constant" commands available.
 listConstCommands::[Item]->[Command]
 listConstCommands =  concat . (map (moduleFold constItemCommands))
 
+-- Check if any names for a command match a string.
 commandFilter::String->Command->Bool
 commandFilter s c = any (\name -> name == s) (names c)
 
@@ -274,6 +285,7 @@ printInventory = numberList . (mapMaybe describe)
 combineCommand::Command
 combineCommand = Command ["combine"] combineFunction
 
+-- Combine the top two items in the inventory.
 combineFunction::CommandFunction
 combineFunction = do
   old <- getInventory
