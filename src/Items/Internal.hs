@@ -5,6 +5,7 @@ import Control.Monad.State
 import Control.Monad (replicateM, mapM)
 import Data.Set as Set (Set, insert, empty, toList, fromList)
 import Data.List as List
+import Format
 
 -- Constants
 max_mods = 100 :: Int     -- Number of modules in a generated item.
@@ -40,6 +41,7 @@ moduleFold f = moduleFold' f [] where
   moduleFold' f p [] = []
   moduleFold' f p (m:ms) = (f (p, m, ms)) ++ (moduleFold' f (m:p) ms)
 
+-- Class for lists of properties, which must have a way to combine them.
 class PropertyList t where
   combineProp :: t -> t -> t
 
@@ -54,6 +56,7 @@ instance PropertyList LWalkProp where
   combineProp p1 p2 = LWalkProp [Smooth (walkSmooth p1), Rough (walkRough p2)]
 
 -- For convenience:
+toWalk::[WalkProp] -> Module
 toWalk props = Walk (LWalkProp props)
 
 -- Get the smoothness/roughness values.
@@ -92,20 +95,36 @@ hasExamine prop = foldr (\p v -> v || (p == prop)) False
 -- Description generation:
 --------------------------------------------------------------------------------
 
+takeRandom::Int->[a]->State StdGen [a]
+takeRandom 0 _ = return []
+takeRandom _ [] = return []
+takeRandom n ls = do
+  i <- getRandom (0, (length ls) - 1)
+  let e = ls!!i
+  next <- takeRandom (n-1) ((take (i-1) ls) ++ (drop i ls))
+  return $ e:next
+  
 -- Generate a description of an item.
 -- Invisible items have empty descriptions.
+describeRandom::Item->State StdGen (Maybe String)
+describeRandom mods = case nouns of
+  [] -> return Nothing
+  _  -> do
+    adjectives <- (takeRandom 5) . toList . fromList $ moduleFold adjectify mods
+    return $ Just $ Format.item adjectives nouns
+  where nouns = foldr (\n ns -> case n of "" -> []; _ -> n:ns) [] (moduleFold nounify mods)
+
 describe::Item->Maybe String
 describe mods = case nouns of
+   -- No nouns, don't describe this.
   [] -> Nothing
-  _  -> Just $ (format adjectives) ++ (format' nouns)
-  where adjectives = (take 5) . toList . fromList $ moduleFold adjectify mods
-        nouns      = moduleFold nounify mods
-        format = foldr (\word words -> case words of
-          [] -> word ++ " "
-          _  -> word ++ ", " ++ words) []
-        format' = foldr (\word words -> case word of
-          [] -> []
-          w  -> case words of [] -> w; _ -> w ++ " " ++ words) []
+
+  -- Combine the adjectives and nouns.
+  _  -> Just $ Format.item adjectives nouns
+  where -- Take the first 5 adjectives generated.
+        adjectives = (take 5) . toList . fromList $ moduleFold adjectify mods
+        -- Take all the nouns, but stop at a blank.
+        nouns      = foldr (\n ns -> case n of "" -> []; _ -> n:ns) [] (moduleFold nounify mods)
 
 --------------------------------------------------------------------------------
 -- ADJECTIFY
@@ -174,6 +193,8 @@ adjectify _ = []
 -- NOUNIFY
 -- Produce nouns to name an item.
 --------------------------------------------------------------------------------
+-- Returns a list of nouns. A null string means to terminate the noun at that
+-- point; only some nouns can be combined.
 nounify::([Module], Module, [Module])->[String]
 
 -- Magnify

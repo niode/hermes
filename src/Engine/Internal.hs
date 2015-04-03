@@ -212,6 +212,7 @@ itemMatches s = mapMaybe (\item ->
 -- Item commands
 --------------------------------------------------------------------------------
 
+-- Collect all ("constant") commands available through the item.
 constItemCommands::([Module], Module, [Module]) -> [Command]
 constItemCommands (p, m, ms) = case (p, m, ms) of
   (_, Walk props, _) -> [walkCommand props]
@@ -259,6 +260,7 @@ exitFunction = return $ UIResponse (Just UIDExit) Nothing
 itemCommand::Command
 itemCommand = Command ["item"] itemFunction
 
+-- Create a new random item.
 itemFunction::CommandFunction
 itemFunction = do
   item <- getNewItem

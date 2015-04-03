@@ -5,6 +5,7 @@ module Items
   , LWalkProp(..)
   , moduleFold
   , combine
+  , describeRandom
   , describe
   , newItem) where
 
