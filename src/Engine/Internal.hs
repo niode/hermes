@@ -13,16 +13,23 @@ import Data.Set as Set (fromList, toList)
 data UIDescriptionResponse
   = UIDExit
   | UIDString String
+  deriving (Show, Eq)
 
 data UIInventoryResponse
   = UIIString String
+  deriving (Show, Eq)
 
 data UIResponse
   = UIResponse (Maybe UIDescriptionResponse) (Maybe UIInventoryResponse)
+  deriving (Show, Eq)
 
 data GameState = GameState  { inventory :: [Item]
                             , rng :: StdGen
                             , events :: [Event]}
+                            deriving Show
+instance Eq GameState where
+  (GameState items _ events) == (GameState items' _ events') =
+    items == items' && events == events'
 
 type CommandFunction = State GameState UIResponse
 data Command = Command {names :: [String], function :: CommandFunction}

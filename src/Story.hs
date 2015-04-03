@@ -11,6 +11,7 @@ data Event
   = ItemPickup Item String
   | ItemDrop Item String
   | StoryEvent String
+  deriving Show
 
 instance Eq Event where
   (ItemPickup _ s) == (ItemPickup _ t) = s == t

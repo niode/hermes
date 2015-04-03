@@ -5,6 +5,7 @@ import Parser.Internal
 import Items.Internal
 import Engine.Internal
 import System.Random
+import Control.Monad.State as S
 import Story
 
 --run all tests
@@ -36,6 +37,8 @@ allTests = TestList [
 
 --individual tests. Format is: assertEqual <Error message> <Expected> <Actual>
 
+dummygen = mkStdGen 1
+
 --parser tests
 parseCommandAVerbTest = TestCase $ assertEqual
   "Should get a Verb Action from parseCommand" (AVerb (Do (NounConst "thing") POn (NounConst "that"))) (parseCommand "do thing on that")
@@ -45,7 +48,7 @@ parseCommandAVerbTest2 = TestCase $ assertEqual
 
 --engine tests
 runCommandTest = TestCase $ assertEqual
-  "Should return State GameState UIResponse" (Nothing) (runCommand (AVerb (Do (NounConst "thing") POn (NounConst "that"))))
+  "Should return State GameState UIResponse" (UIResponse Nothing Nothing, initState (mkStdGen 1)) (runCommandState (AVerb (Do (NounConst "thing") POn (NounConst "that"))) (initState dummygen))
 
 
 --uiDescriptionTest = TestCase $ assertEqual
@@ -109,3 +112,9 @@ parseCommandAConjunctionTest = TestCase $ assertEqual
   "Should get a Conjunction Action from parseCommand" (AConjunction (AVerb (VerbConst "run")) (AVerb (VerbConst "hide"))) (parseCommand "run and hide")
 
 -}
+
+run::CommandFunction->GameState->(UIResponse, GameState)
+run cmd st = runState cmd st
+
+runCommandState::Action->GameState->(UIResponse, GameState)
+runCommandState act st = runState (runCommand act) st
