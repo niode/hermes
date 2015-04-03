@@ -274,7 +274,10 @@ combineCommand = Command ["combine"] combineFunction
 
 combineFunction::CommandFunction
 combineFunction = do
-  (a:b:inv) <- getInventory
-  setInventory $ (combine a b) : inv
-  inv' <- getInventory
-  return $ uiInventory $ printInventory inv'
+  old <- getInventory
+  case old of
+    (a:b:inv) -> do
+      setInventory $ (combine a b) : inv
+      new <- getInventory
+      return $ uiInventory $ printInventory new
+    _ -> return $ uiDescription "You do not have enough items."
