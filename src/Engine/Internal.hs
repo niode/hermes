@@ -159,12 +159,9 @@ nullFunction = do
 
 -- "Constant" function (i.e. no arguments).
 constFunction::String->State GameState UIResponse
-constFunction s = do
-  cmd <- constCommand s
-  rsp <- cmd
-  return rsp
+constFunction s = constCommand s >>= id -- Magic!
 
--- "Constant" command. Check if the command matches any given by items.
+-- "Constant" command. Find a command function that matches the string.
 constCommand::String->State GameState CommandFunction
 constCommand s = do
   inv <- getInventory
