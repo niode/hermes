@@ -10,6 +10,7 @@ import Format
 -- Constants
 max_mods = 100 :: Int     -- Number of modules in a generated item.
 max_rounds = 100 :: Int   -- Number of rounds to run L-System.
+max_magnify = 30 :: Int   -- Maximum magnitude of generated modules.
 
 type Item = [Module]
 
@@ -112,7 +113,7 @@ describeRandom mods = case nouns of
   _  -> do
     adjectives <- (takeRandom 5) . toList . fromList $ moduleFold adjectify mods
     return $ Just $ Format.item adjectives nouns
-  where nouns = foldr (\n ns -> case n of "" -> []; _ -> n:ns) [] (moduleFold nounify mods)
+  where nouns = takeWhile (/= "") (moduleFold nounify mods)
 
 describe::Item->Maybe String
 describe mods = case nouns of
@@ -124,7 +125,7 @@ describe mods = case nouns of
   where -- Take the first 5 adjectives generated.
         adjectives = (take 5) . toList . fromList $ moduleFold adjectify mods
         -- Take all the nouns, but stop at a blank.
-        nouns      = foldr (\n ns -> case n of "" -> []; _ -> n:ns) [] (moduleFold nounify mods)
+        nouns      = takeWhile (/= "") (moduleFold nounify mods)
 
 --------------------------------------------------------------------------------
 -- ADJECTIFY
@@ -284,17 +285,21 @@ nounify _ = []
 combine::Item->Item->Item
 combine ms ns = normalize $ lgen 1 $ alternate ms ns
 
+-- Alternate items in lists.
 alternate::[a]->[a]->[a]
 alternate [] xs = xs
 alternate (y:ys) xs = y : (alternate xs ys)
 
 -- Random item generation ------------------------------------------------------
+
+-- Helper functions:
 getRandom::(Random a) => (a, a) -> State StdGen a
 getRandom (low, hi) = state (randomR (low, hi))
 
 getRandoms::(Random a) => (a, a) -> Int -> State StdGen [a]
 getRandoms (low, hi) n = replicateM n (getRandom (low, hi))
 
+-- Generate a new random item.
 newItem::State StdGen Item
 newItem = do
   numMods <- getRandom (0, max_mods)
@@ -304,9 +309,10 @@ newItem = do
   let item = normalize $ lgen rounds modules
   return $ item
 
+-- Generate random modules.
 generateModule::Int->State StdGen Module
 generateModule 0 = do
-  n <- getRandom (1, 30)
+  n <- getRandom (1, max_magnify)
   return $ Magnify n
 
 generateModule 1 = do

@@ -74,6 +74,7 @@ setRng::StdGen->State GameState ()
 setRng rng = state $ \(GameState inv _ events) -> ((), GameState inv rng events)
 
 -- Get an item with the given name.
+-- (Actually gets the first item because we don't need this yet.)
 getItem::String->State GameState (Maybe Item)
 getItem name = do
   inv <- getInventory
