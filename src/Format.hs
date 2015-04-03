@@ -25,7 +25,11 @@ appendDescription old new = old ++ "\n\n" ++ new
 
 -- Format an item description. (adjectives, nouns).
 item::[String]->[String]->String
-item a n = (adjectives a) ++ " " ++ (nouns n)
+item a n = case as of
+  "" -> ns
+  _  -> as ++ " " ++ ns
+  where as = adjectives a
+        ns = nouns n
 
 -- Format a list of adjectives.
 adjectives::[String] -> String
