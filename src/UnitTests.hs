@@ -27,9 +27,18 @@ allTests = TestList [
   TestLabel "describeTest7" describeTest7,
   TestLabel "describeTest8" describeTest8,
   TestLabel "describeTest8" describeTest9,
-  TestLabel "describeTest8" describeTest10
-  
-
+  TestLabel "describeTest8" describeTest10,
+  TestLabel "formatTest1" formatTest1,
+  TestLabel "formatTest2" formatTest2,
+  TestLabel "formatTest3" formatTest3,
+  TestLabel "formatTest4" formatTest4,
+  TestLabel "formatTest5" formatTest5,
+  TestLabel "formatTest6" formatTest6,
+  TestLabel "formatTest7" formatTest7,
+  TestLabel "formatTest8" formatTest8,
+  TestLabel "formatTest9" formatTest9,
+  TestLabel "formatTest10" formatTest10,
+  TestLabel "formatTest10" formatTest11
   ]
 
 --TestLabel "initStateTest" initStateTest
